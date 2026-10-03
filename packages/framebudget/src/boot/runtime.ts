@@ -3,38 +3,44 @@
  * self-contained, minified IIFE; createBootScript() replaces the placeholder
  * with the site's options. It decides before the first paint and never throws.
  */
-import type { BootOptions } from "../boot";
-import { decide } from "../decide";
-import { getScope } from "../env";
-import { learnedBlocks } from "../learning";
-import { applyToDocument, COLD_MS, initialScore, loadContext } from "../start";
+import { decide } from "../core/decision/decide";
+import { learnedBlocks } from "../core/learning/learned-blocks";
+import { applyToDocument } from "../platform/document/apply-to-document";
+import { getScope } from "../platform/scope/get-scope";
+import { initialScore } from "../startup/initial-score";
+import { loadContext } from "../startup/load-context";
+import { COLD_MS } from "../startup/startup.constants";
+import type { BootOptions } from "./boot.types";
 
-declare const __FRAMEBUDGET_OPTIONS__: BootOptions;
+// Typed with `false` so a missing or falsy value still falls back to the defaults.
+declare const __FRAMEBUDGET_OPTIONS__: false | BootOptions;
 
 const scope = getScope();
 if (scope) {
   try {
-    const options = __FRAMEBUDGET_OPTIONS__ || {};
-    const ctx = loadContext(scope, [options.calibration]);
-    const first = initialScore(scope, ctx, options.coldMs || COLD_MS);
-    const d = decide({
-      cal: ctx.cal,
-      score: ctx.simulated !== null ? ctx.simulated : first.score,
-      hints: ctx.hints,
-      prev: ctx.stored.qualified,
-      learned: ctx.simulated !== null ? [] : learnedBlocks(ctx.stored, ctx.cal),
-      forced: ctx.forced,
+    const { calibration: calibrationPatch, coldMs = 0 } = __FRAMEBUDGET_OPTIONS__ || {};
+    const context = loadContext(scope, [calibrationPatch]);
+    const { simulated, stored } = context;
+    // `|| COLD_MS` on a number: a zero or NaN budget also means the default.
+    const first = initialScore(scope, context, coldMs || COLD_MS);
+    const decision = decide({
+      calibration: context.calibration,
+      score: simulated ?? first.score,
+      hints: context.hints,
+      previous: stored.qualified,
+      learned: simulated === null ? learnedBlocks(stored, context.calibration) : [],
+      forced: context.forced,
     });
-    applyToDocument(scope, d.tier, d.effects);
+    applyToDocument(scope, decision.tier, decision.effects);
     scope.__framebudget = {
       v: 1,
       score: first.score,
       source: first.source,
       cold: first.cold,
-      tier: d.tier,
-      effects: d.effects,
-      qualified: d.qualified,
-      forced: ctx.forced,
+      tier: decision.tier,
+      effects: decision.effects,
+      qualified: decision.qualified,
+      forced: context.forced,
     };
   } catch {
     // Never break the page. Without attributes, CSS keeps effects off and the core decides later.

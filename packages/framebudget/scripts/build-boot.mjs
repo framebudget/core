@@ -1,5 +1,5 @@
 // Bundles src/boot/runtime.ts into one minified IIFE and stores it as a string
-// constant in src/boot/source.generated.ts, which src/boot.ts exports.
+// constant in src/boot/source.generated.ts, which src/boot/index.ts exports.
 import { build } from "esbuild";
 import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";

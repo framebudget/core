@@ -41,7 +41,7 @@ const head = `<script>${bootScript}</script>`;
 const custom = `<script>${createBootScript({ calibration: { effects: { confetti: { threshold: 60, cost: 4, motion: true } } } })}</script>`;
 ```
 
-The script is self-contained (about 8.8 KB minified, 3.7 KB gzipped), never throws, and works when any browser API is missing. With a Content Security Policy, add a nonce or the script's hash.
+The script is self-contained (about 10.3 KB minified, 4.3 KB gzipped), never throws, and works when any browser API is missing. With a Content Security Policy, add a nonce or the script's hash.
 
 CSS can gate effects without any JavaScript:
 
@@ -233,7 +233,21 @@ npm install
 npm run build      # boot script bundle, then tsup (ESM and .d.ts)
 npm test           # vitest
 npm run typecheck
+npm run lint       # eslint (rules below); lint:fix applies the safe fixes
+npm run format     # prettier
 npm run size       # minified and gzipped sizes per entry
 ```
+
+A pre-commit hook (husky and lint-staged, installed by `npm install` at the repository root) formats and lints the staged files, then runs the typecheck, the full lint and the tests.
+
+The source is layered, and `eslint.config.js` enforces the layers:
+
+- `src/core`: pure functions (tier, calibration, decision, learning, telemetry report). No mutation, no loops, no browser access.
+- `src/benchmark`, `src/governor`: measurement.
+- `src/platform`: every browser access (storage, URL overrides, hints, document attributes, beacon, fetch), wrapped so it never throws.
+- `src/startup`: the first decision, shared by the boot script and the core.
+- `src/budget`, `src/boot`, `src/react`, `src/panel`: the public entries.
+
+Lint limits: 80 lines per file and 60 per function (blank and comment lines excluded), interfaces and type aliases only in `*.types.ts` files (`*.enum.ts` for a const object and its union type), kebab-case file names, descriptive identifiers.
 
 `src/boot/source.generated.ts` is generated from `src/boot/runtime.ts` by `scripts/build-boot.mjs`. The build, test and typecheck scripts regenerate it.
