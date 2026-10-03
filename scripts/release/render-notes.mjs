@@ -1,8 +1,7 @@
 // Markdown for one release: the CHANGELOG.md section, the GitHub release body,
-// the changelog pull request body, and the data the release art shows.
-import { AREAS, GROUPS, GROUP_TITLES, countEntries } from "./commits.mjs";
-
-const AREA_TITLES = { library: "Library", website: "Website" };
+// the changelog pull request body, and the data the release art shows. Sections
+// come from release.config.json, in config order.
+import { GROUPS, GROUP_TITLES, countEntries } from "./commits.mjs";
 
 function formatEntry(commit, repo) {
   const scope = commit.scope ? `**${commit.scope}:** ` : "";
@@ -12,7 +11,7 @@ function formatEntry(commit, repo) {
   return `- ${scope}${commit.description} (${sha})${pr}`;
 }
 
-function renderArea(groups, repo, level) {
+function renderGroups(groups, repo, level) {
   if (countEntries(groups) === 0) return "No changes.";
   return GROUPS.filter((group) => groups[group].length > 0)
     .map((group) => {
@@ -22,16 +21,16 @@ function renderArea(groups, repo, level) {
     .join("\n\n");
 }
 
-/** Library and Website sections, headed at `level` (their groups one level deeper). */
-export function renderAreas(release, repo, level) {
-  return AREAS.map(
-    (area) => `${"#".repeat(level)} ${AREA_TITLES[area]}\n\n${renderArea(release[area], repo, level + 1)}`,
-  ).join("\n\n");
+/** One heading per section at `level` (its groups one level deeper). */
+export function renderSections({ release, sections, repo }, level) {
+  return sections
+    .map((section) => `${"#".repeat(level)} ${section.title}\n\n${renderGroups(release[section.id], repo, level + 1)}`)
+    .join("\n\n");
 }
 
 /** The section prepended to CHANGELOG.md. */
-export function renderChangelogSection({ version, date, release, repo }) {
-  return `## [${version}] - ${date}\n\n${renderAreas(release, repo, 3)}\n`;
+export function renderChangelogSection(notes) {
+  return `## [${notes.version}] - ${notes.date}\n\n${renderSections(notes, 3)}\n`;
 }
 
 function compareLine({ repo, previousTag, tag }) {
@@ -42,8 +41,8 @@ function compareLine({ repo, previousTag, tag }) {
 
 /** The GitHub release body: the art, then the same content as the changelog. */
 export function renderReleaseBody(notes) {
-  const art = notes.artUrl ? `![framebudget ${notes.tag}](${notes.artUrl})\n\n` : "";
-  return `${art}${renderAreas(notes.release, notes.repo, 2)}${compareLine(notes)}\n`;
+  const art = notes.artUrl ? `![${notes.label} ${notes.tag}](${notes.artUrl})\n\n` : "";
+  return `${art}${renderSections(notes, 2)}${compareLine(notes)}\n`;
 }
 
 /** The body of the `chore(release)` pull request. */
@@ -52,23 +51,21 @@ export function renderPullRequestBody(notes) {
   return [
     `Changelog for ${notes.tag} (${release}).`,
     "",
-    "- prepend the release to `CHANGELOG.md`",
-    `- set the package version to ${notes.version}`,
-    `- add the release art at \`docs/public/releases/${notes.tag}.png\``,
+    `- prepend ${notes.tag} to \`CHANGELOG.md\``,
     "",
-    renderAreas(notes.release, notes.repo, 2),
+    renderSections(notes, 2),
     "",
   ].join("\n");
 }
 
-/** Up to `limit` entries for the art: breaking first, library before website, no repeats. */
-export function highlights(release, limit = 3) {
+/** Up to `limit` entries for the art: breaking first, sections in config order, no repeats. */
+export function highlights({ release, sections }, limit = 3) {
   const seen = new Map();
   for (const group of GROUPS) {
-    for (const area of AREAS) {
-      for (const commit of release[area][group]) {
-        const entry = seen.get(commit.sha) ?? { text: commit.description, group, areas: [] };
-        entry.areas.push(AREA_TITLES[area]);
+    for (const section of sections) {
+      for (const commit of release[section.id][group]) {
+        const entry = seen.get(commit.sha) ?? { text: commit.description, group, sections: [] };
+        entry.sections.push(section.title);
         seen.set(commit.sha, entry);
       }
     }
@@ -76,12 +73,13 @@ export function highlights(release, limit = 3) {
   return [...seen.values()].slice(0, limit);
 }
 
-/** What render-art.mjs needs to draw the release card. */
-export function artNotes({ version, date, release }) {
+/** notes.json: what render-art.mjs needs to draw the release card. */
+export function artNotes(notes) {
   return {
-    version,
-    date,
-    counts: Object.fromEntries(AREAS.map((area) => [AREA_TITLES[area], countEntries(release[area])])),
-    highlights: highlights(release),
+    version: notes.version,
+    date: notes.date,
+    label: notes.label,
+    counts: notes.sections.map(({ id, title }) => ({ id, title, count: countEntries(notes.release[id]) })),
+    highlights: highlights(notes),
   };
 }

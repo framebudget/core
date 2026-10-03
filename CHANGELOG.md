@@ -1,6 +1,6 @@
 # Changelog
 
-Every release of framebudget, newest first, split by what shipped: the library (the npm package) and the website (framebudget.dev).
+Every release of the framebudget library, newest first, split by package: `@framebudget/core`, `@framebudget/react` and `framebudget`. Releases up to 0.2.1 are split into the library and the website (framebudget.dev), which now has its own changelog in [framebudget/website](https://github.com/framebudget/website).
 
 ## [0.2.1] - 2026-10-03
 

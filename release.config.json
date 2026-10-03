@@ -1,0 +1,8 @@
+{
+  "label": "Library release",
+  "sections": [
+    { "id": "core", "title": "@framebudget/core", "paths": ["packages/core/"] },
+    { "id": "react", "title": "@framebudget/react", "paths": ["packages/react/"] },
+    { "id": "framebudget", "title": "framebudget", "paths": ["packages/framebudget/", "README.md"] }
+  ]
+}
