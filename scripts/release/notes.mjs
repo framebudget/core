@@ -1,19 +1,23 @@
 #!/usr/bin/env node
-// Release notes for a tag, from the commits since the previous release tag.
+// Release notes for a tag, from the commits since the previous release tag, split
+// into the sections of release.config.json. Run it from the released repo's root.
 //
 //   node scripts/release/notes.mjs --tag v0.2.0 --dry-run   print the CHANGELOG.md section
 //   node scripts/release/notes.mjs --tag v0.2.0 --check     validate, warn on a small bump, set outputs
 //   node scripts/release/notes.mjs --tag v0.2.0 --out-dir tmp [--art-url URL] [--date YYYY-MM-DD]
 //       write CHANGELOG.md, tmp/release-body.md, tmp/pr-body.md and tmp/notes.json
+//   --config FILE (default release.config.json), --changelog FILE (default CHANGELOG.md)
 //
 // Every mode fails when the tag is not vX.Y.Z[-pre] or not above the previous release tag.
+// --check sets version, prerelease, previous_tag, changed and changed_<id> per section.
 // In GitHub Actions, outputs go to $GITHUB_OUTPUT and the warning to $GITHUB_STEP_SUMMARY.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { insertSection } from "./changelog.mjs";
-import { classifyPaths, groupOf, groupRelease, packageRuntimeChanged, parseCommit } from "./commits.mjs";
-import { listTags, packageJsonAround, pullRequestOf, readCommits, repositorySlug, resolveCommit } from "./git.mjs";
+import { changedOutputs, classifyCommits, groupRelease } from "./commits.mjs";
+import { loadConfig } from "./config.mjs";
+import { listTags, pullRequestOf, readCommits, repositorySlug, resolveCommit } from "./git.mjs";
 import { artNotes, renderChangelogSection, renderPullRequestBody, renderReleaseBody } from "./render-notes.mjs";
 import { bumpWarning, compareVersions, parseTag, previousTag } from "./semver.mjs";
 
@@ -26,6 +30,7 @@ const { values: options } = parseArgs({
     "out-dir": { type: "string" },
     "art-url": { type: "string" },
     changelog: { type: "string", default: "CHANGELOG.md" },
+    config: { type: "string", default: "release.config.json" },
   },
 });
 
@@ -47,17 +52,12 @@ function resolveRelease(tag) {
   return { version, commit: tagged ?? resolveCommit("HEAD"), previous };
 }
 
-// Every commit in the range with the areas it touched and its changelog group
-// (null when the changelog leaves it out). Release commits are dropped.
-function readClassifiedCommits(range) {
-  return readCommits(range)
-    .map((raw) => {
-      const commit = parseCommit(raw);
-      const around = raw.files.includes("package.json") ? packageJsonAround(raw.sha) : null;
-      const areas = classifyPaths(raw.files, around ? packageRuntimeChanged(around.before, around.after) : false);
-      return { ...commit, areas, group: areas.length > 0 ? groupOf(commit) : null };
-    })
-    .filter((commit) => commit.areas.length > 0 && !(commit.type === "chore" && commit.scope === "release"));
+function readConfig(file) {
+  try {
+    return loadConfig(file);
+  } catch (error) {
+    return fail(`cannot read the release config: ${error.message}`);
+  }
 }
 
 function setOutputs(outputs) {
@@ -79,29 +79,26 @@ function writeFiles(notes, outDir) {
   writeFileSync(path.join(outDir, "notes.json"), `${JSON.stringify(artNotes(notes), null, 2)}\n`);
 }
 
+const { label, sections } = readConfig(options.config);
 const { version, commit, previous } = resolveRelease(options.tag);
-const classified = readClassifiedCommits(previous ? `${previous}..${commit}` : commit);
+const classified = classifyCommits(readCommits(previous ? `${previous}..${commit}` : commit), sections);
 const shipped = classified.filter((entry) => entry.group);
 const warning = bumpWarning(version, previous, shipped);
 const repo = repositorySlug();
 const withLinks = options.check ? shipped : shipped.map((entry) => ({ ...entry, pr: pullRequestOf(repo, entry.sha) }));
-const release = groupRelease(withLinks);
-const notes = { tag: version.tag, version: version.version, date: options.date, previousTag: previous, repo, release };
-notes.artUrl = options["art-url"];
+const release = groupRelease(withLinks, sections);
+const notes = { tag: version.tag, version: version.version, date: options.date, previousTag: previous, repo };
+Object.assign(notes, { label, sections, release, artUrl: options["art-url"] });
 
 if (warning) console.error(`warning: ${warning}`);
 if (options["dry-run"]) {
   process.stdout.write(renderChangelogSection(notes));
 } else if (options.check) {
-  // Any library path counts, changelog-worthy or not: a chore(deps) runtime bump still ships.
-  const libraryChanged = classified.some((entry) => entry.areas.includes("library"));
-  const websiteChanged = classified.some((entry) => entry.areas.includes("website"));
   setOutputs({
     version: version.version,
     prerelease: version.prerelease.length > 0,
     previous_tag: previous ?? "",
-    library_changed: libraryChanged,
-    website_changed: websiteChanged,
+    ...changedOutputs(classified, sections),
   });
   if (warning) summarize(`> [!WARNING]\n> ${warning}\n`);
   summarize(renderChangelogSection(notes));

@@ -1,65 +1,26 @@
 {
-  "name": "framebudget",
-  "version": "0.2.1",
-  "description": "Decides, per device, which visual effects a site can afford. Keep the effects. Lose the stutter.",
+  "name": "@framebudget/monorepo",
+  "private": true,
+  "description": "Workspace root of the framebudget packages: @framebudget/core, @framebudget/react and framebudget.",
   "license": "MIT",
   "type": "module",
-  "sideEffects": false,
-  "keywords": [
-    "performance",
-    "animation",
-    "frame budget",
-    "device capability",
-    "adaptive loading",
-    "prefers-reduced-motion",
-    "react"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./boot": {
-      "types": "./dist/boot.d.ts",
-      "import": "./dist/boot.js"
-    },
-    "./react": {
-      "types": "./dist/react.d.ts",
-      "import": "./dist/react.js"
-    },
-    "./panel": {
-      "types": "./dist/panel.d.ts",
-      "import": "./dist/panel.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "boot": "node scripts/build-boot.mjs",
-    "build": "node scripts/build-boot.mjs && tsup",
-    "test": "node scripts/build-boot.mjs && vitest run && node --test scripts/release/*.test.mjs",
-    "typecheck": "node scripts/build-boot.mjs && tsc --noEmit && tsc --noEmit -p test",
+    "boot": "node packages/core/scripts/build-boot.mjs",
+    "build": "npm run build -w packages/core && npm run build -w packages/react && npm run build -w packages/framebudget",
+    "test": "node packages/core/scripts/build-boot.mjs && vitest run && node --test scripts/release/*.test.mjs",
+    "typecheck": "node packages/core/scripts/build-boot.mjs && tsc --noEmit && tsc --noEmit -p packages/core/test",
     "size": "node scripts/size.mjs",
-    "lint": "node scripts/build-boot.mjs && eslint --max-warnings=0 .",
-    "lint:fix": "node scripts/build-boot.mjs && eslint --fix .",
+    "pack": "node scripts/pack.mjs",
+    "lint": "node packages/core/scripts/build-boot.mjs && eslint --max-warnings=0 .",
+    "lint:fix": "node packages/core/scripts/build-boot.mjs && eslint --fix .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "deploy": "npm run build && npm run build --prefix docs && npm run deploy --prefix worker",
     "release:notes": "node scripts/release/notes.mjs",
     "release:art": "node scripts/release/render-art.mjs"
-  },
-  "peerDependencies": {
-    "react": ">=18"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
@@ -86,15 +47,15 @@
     "esbuild": "^0.28.2"
   },
   "lint-staged": {
-    "{src,test,scripts}/**/*.{ts,js,mjs}": [
+    "{packages,scripts}/**/*.{ts,js,mjs}": [
       "eslint --max-warnings=0 --no-warn-ignored --fix",
       "prettier --write"
     ],
-    "{eslint.config.js,tsup.config.ts,vitest.config.ts}": [
+    "{eslint.config.js,vitest.config.ts}": [
       "eslint --max-warnings=0 --no-warn-ignored --fix",
       "prettier --write"
     ],
-    "{package.json,tsconfig.json,test/tsconfig.json}": [
+    "{package.json,packages/*/package.json,tsconfig.json,packages/*/tsconfig*.json,packages/*/test/tsconfig.json}": [
       "prettier --write"
     ]
   }

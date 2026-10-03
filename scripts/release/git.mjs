@@ -44,21 +44,6 @@ export function readCommits(range) {
     });
 }
 
-function readJsonAt(revision, file) {
-  const text = tryRun("git", ["show", `${revision}:${file}`]);
-  if (text === null) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-/** package.json before and after a commit (null where it did not exist). */
-export function packageJsonAround(sha) {
-  return { before: readJsonAt(`${sha}^`, "package.json"), after: readJsonAt(sha, "package.json") };
-}
-
 /** `owner/repo`, from GITHUB_REPOSITORY or the origin remote; null when unknown. */
 export function repositorySlug() {
   if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY;

@@ -1,6 +1,6 @@
 # framebudget
 
-![video](./assets/brand/og.png)
+![framebudget](https://raw.githubusercontent.com/framebudget/assets/main/brand/og.png)
 
 Keep the effects. Lose the stutter.
 
@@ -21,21 +21,36 @@ At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page tr
 npm install framebudget
 ```
 
-ESM only, with type declarations. `react` is an optional peer dependency, needed only for `framebudget/react`.
+That installs everything: the core, the boot script, the diagnostics panel and the React hooks (`framebudget`, `framebudget/boot`, `framebudget/panel` and `framebudget/react`). ESM only, with type declarations. `react` is an optional peer dependency, needed only for `framebudget/react`: installing framebudget never installs React.
+
+The same code is also published as two scoped packages, for projects that want only part of it:
+
+| Package | Contains | Entries |
+| --- | --- | --- |
+| `framebudget` | everything: re-exports the two packages below | `framebudget`, `framebudget/boot`, `framebudget/panel`, `framebudget/react` |
+| `@framebudget/core` | the base, without React | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
+| `@framebudget/react` | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` |
+
+```sh
+npm install @framebudget/core    # the base only
+npm install @framebudget/react   # the hooks, with the core
+```
+
+The code exists once: `framebudget` only re-exports the scoped packages, so a page has a single `budget` whether it imports `framebudget`, `@framebudget/core` or both. The examples below import from `framebudget`; with the scoped packages, import the same names from `@framebudget/core` (and `@framebudget/react` for the hooks).
 
 ### From GitHub Packages
 
-Releases are published to GitHub Packages as `@framebudget/framebudget`. Point the scope at the GitHub registry in your project's `.npmrc`, with a GitHub token that has `read:packages`:
+Publishing to npmjs is coming. Until then, releases are published to GitHub Packages, which carries the scoped packages `@framebudget/core` and `@framebudget/react` only (it does not accept the unscoped `framebudget`). Installing from it needs a GitHub token with `read:packages`, also for public packages. Point the scope at the GitHub registry in your project's `.npmrc`:
 
 ```ini
 @framebudget:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
-Then install it under its usual name, so the imports below stay as they are (prereleases are on the `next` dist-tag):
+Then install the scoped packages (prereleases are on the `next` dist-tag):
 
 ```sh
-npm install framebudget@npm:@framebudget/framebudget
+npm install @framebudget/core    # or @framebudget/react for the hooks
 ```
 
 ## 1. Add the boot script
@@ -96,7 +111,7 @@ function Page() {
 }
 ```
 
-During server rendering and hydration, `useBudget` answers `false` and `useTier` answers `Lite`, so effects only start on the client. `BudgetProvider` is only needed for a budget other than the page's (for example `createBudget()` in tests).
+The hooks are also published on their own as `@framebudget/react`. During server rendering and hydration, `useBudget` answers `false` and `useTier` answers `Lite`, so effects only start on the client. `BudgetProvider` is only needed for a budget other than the page's (for example `createBudget()` in tests).
 
 ## API
 
@@ -248,41 +263,51 @@ With `calibrationUrl`, framebudget fetches a calibration patch (JSON in the `cal
 
 ## Development
 
+The repository ([github.com/framebudget/core](https://github.com/framebudget/core)) is an npm workspaces monorepo. Its three packages are released together, always at the same version:
+
+```
+packages/core/         @framebudget/core   all the code except React: budget, boot script, panel, benchmark, governor, platform, startup
+packages/react/        @framebudget/react  BudgetProvider, useBudget, useTier; depends on @framebudget/core
+packages/framebudget/  framebudget         re-exports @framebudget/core and @framebudget/react, no code of its own
+scripts/               size report, pack check, and the release tooling (scripts/release/, also used by the website)
+```
+
+`@framebudget/react` uses the core like any site does, through its public entry. `framebudget` depends on both scoped packages at the exact same version, and its files hold only `export ... from` statements. The lint enforces both, so the code exists once and a page always has one `budget`.
+
+The website (the landing page and API reference at framebudget.dev, and the Cloudflare Worker that serves it and collects reports) lives in [github.com/framebudget/website](https://github.com/framebudget/website). The brand (logo, fonts, tokens, the release art template) and the launch video live in [github.com/framebudget/assets](https://github.com/framebudget/assets).
+
 ```sh
 npm install
-npm run build      # boot script bundle, then tsup (ESM and .d.ts)
-npm test           # vitest, then the release script tests (node --test)
+npm run build      # core (boot script bundle, then tsup), react (tsup), framebudget (tsc), in that order
+npm test           # vitest (packages/*/test), then the release script tests (node --test)
 npm run typecheck
 npm run lint       # eslint (rules below); lint:fix applies the safe fixes
 npm run format     # prettier
 npm run size       # minified and gzipped sizes per entry
+npm run pack -- --out /tmp/pack   # builds, packs and checks the three tarballs, then smoke-installs them
 ```
-
-The library is the repository root. `docs/` is the landing page and API reference (a separate Vite project that links the library, see `docs/README.md`), `worker/` is the Cloudflare Worker that serves `docs/dist` and collects the site's reports (see `worker/README.md`), `assets/brand/` holds the logo, fonts and tokens, and `assets/video/` the HyperFrames launch video.
 
 A pre-commit hook (husky and lint-staged, installed by `npm install`) formats and lints the staged files, then runs the typecheck, the full lint and the tests.
 
-The source is layered, and `eslint.config.js` enforces the layers:
+The core source is layered, and `eslint.config.js` enforces the layers:
 
-- `src/core`: pure functions (tier, calibration, decision, learning, telemetry report). No mutation, no loops, no browser access.
-- `src/benchmark`, `src/governor`: measurement.
-- `src/platform`: every browser access (storage, URL overrides, hints, document attributes, beacon, fetch), wrapped so it never throws.
-- `src/startup`: the first decision, shared by the boot script and the core.
-- `src/budget`, `src/boot`, `src/react`, `src/panel`: the public entries.
+- `packages/core/src/core`: pure functions (tier, calibration, decision, learning, telemetry report). No mutation, no loops, no browser access.
+- `packages/core/src/benchmark`, `packages/core/src/governor`: measurement.
+- `packages/core/src/platform`: every browser access (storage, URL overrides, hints, document attributes, beacon, fetch), wrapped so it never throws.
+- `packages/core/src/startup`: the first decision, shared by the boot script and the core.
+- `packages/core/src/budget`, `packages/core/src/boot`, `packages/core/src/panel`: the public entries.
+
+`@framebudget/core` imports neither React nor the other packages, and `@framebudget/react` imports only the public entries of `@framebudget/core`.
 
 Lint limits: 80 lines per file and 60 per function (blank and comment lines excluded), 8 files per folder (group by concern in subfolders past that), interfaces and type aliases only in `*.types.ts` files (`*.enum.ts` for a const object and its union type), kebab-case file names, descriptive identifiers.
 
-`src/boot/source.generated.ts` is generated from `src/boot/runtime.ts` by `scripts/build-boot.mjs`. The build, test and typecheck scripts regenerate it.
+`packages/core/src/boot/source.generated.ts` is generated from `packages/core/src/boot/runtime.ts` by `packages/core/scripts/build-boot.mjs`. The build, test, typecheck and lint scripts regenerate it.
+
+`scripts/pack.mjs --out <dir>` builds every package, packs each one into `<dir>`, and fails on any file other than `package.json`, `README.md`, `LICENSE` and the `dist/` JavaScript and declarations, or on an install script. It then installs the three tarballs into a throwaway project and checks that `framebudget` and `@framebudget/core` share one `budget`, that `framebudget/react` exports `useBudget`, and that React was not installed. The root `README.md` is copied into `packages/framebudget/` as that package's readme.
 
 ### Pull request checks
 
-`.github/workflows/ci.yml` runs on pull requests that are ready for review; drafts skip it until they are marked ready. Each part runs only when the pull request touches it:
-
-- **Library** (`src/`, `test/`, `scripts/`, root configs and manifests): format check, lint, typecheck, tests, build and size.
-- **Website** (`docs/`, the library source, `README.md`): builds the library, then type-checks and builds the site.
-- **Worker** (`worker/`, `src/core/`): typecheck and tests.
-
-The `CI` job sums them up: it fails when a part that ran failed, and passes when the others were skipped. A change to the workflow itself runs every part.
+`.github/workflows/ci.yml` runs on pull requests that are ready for review; drafts skip it until they are marked ready. The **Library** job runs the format check, lint, typecheck, tests, build, size report and `scripts/pack.mjs`. The `CI` job sums it up, so it is the one required check.
 
 ### Releases
 
@@ -296,11 +321,13 @@ git tag v0.3.0 && git push origin v0.3.0
 `.github/workflows/release.yml` then:
 
 1. checks the tag (format, order, no existing release) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
-2. writes the notes from the commits since the previous tag, split into Library (`src/`, `README.md`, the build, runtime `package.json` fields) and Website (`docs/`, `worker/`), renders the release art (`assets/brand/build/release.html`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package version and the art in `docs/public/releases/`;
-3. when the library changed: verifies the registry signatures of the dependencies, audits them, tests, builds and packs the tarball once (only `dist/`, `package.json` and `README.md`, no install scripts), then publishes that exact tarball to GitHub Packages as `@framebudget/framebudget` (`next` dist-tag for prereleases);
-4. deploys the site and the worker to Cloudflare;
-5. creates a draft release with the notes, the art, the tarball and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
+2. writes the notes from the commits since the previous tag, split per package as `release.config.json` defines (`@framebudget/core`: `packages/core/`; `@framebudget/react`: `packages/react/`; `framebudget`: `packages/framebudget/` and `README.md`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package versions and `package-lock.json`;
+3. verifies the registry signatures of the dependencies, audits them, tests, sets the version in every package, then builds, checks and packs the three tarballs once (`scripts/pack.mjs`) and attests their build provenance;
+4. publishes `@framebudget/core` and `@framebudget/react` to GitHub Packages (it rejects unscoped names), and all three packages to npmjs with provenance when the `NPM_TOKEN` secret is set (otherwise it skips with a notice); prereleases go to the `next` dist-tag;
+5. renders the release art from the template in [framebudget/assets](https://github.com/framebudget/assets), creates a draft release with the notes, the art, the tarballs and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
 
-Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/framebudget` (build provenance: the workflow run and the commit that produced it).
+`.github/workflows/publish-npm.yml` (run by hand with a `tag`) publishes the tarballs of an existing release to npmjs, after verifying them (release asset and build provenance).
 
-Preview the notes with `npm run release:notes -- --tag v0.2.0 --dry-run` (HEAD stands in for a tag that does not exist yet), and the art with `npm run release:art -- --version 0.2.0 --date 2026-10-03 --notes notes.json --out art.png` (headless Chrome, `CHROME_PATH` to override).
+Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/core` (build provenance: the workflow run and the commit that produced it).
+
+Preview the notes with `npm run release:notes -- --tag v0.2.0 --dry-run` (HEAD stands in for a tag that does not exist yet), and the art with `npm run release:art -- --template ../assets/brand/build/release.html --version 0.2.0 --date 2026-10-03 --notes notes.json --out art.png` (with [framebudget/assets](https://github.com/framebudget/assets) checked out next to this repository; headless Chrome, `CHROME_PATH` to override).

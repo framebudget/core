@@ -12,7 +12,13 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": []
+    "types": [],
+    "paths": {
+      "@framebudget/core": ["./packages/core/src/index.ts"],
+      "@framebudget/core/boot": ["./packages/core/src/boot/index.ts"],
+      "@framebudget/core/panel": ["./packages/core/src/panel/index.ts"],
+      "@framebudget/react": ["./packages/react/src/index.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["packages/*/src"]
 }

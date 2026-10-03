@@ -1,53 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { classifyPaths, groupOf, groupRelease, packageRuntimeChanged, parseCommit } from "./commits.mjs";
-import { renderChangelogSection } from "./render-notes.mjs";
+import { changedOutputs, classifyCommits, groupOf, groupRelease, parseCommit } from "./commits.mjs";
+import { artNotes, renderChangelogSection } from "./render-notes.mjs";
 
 const commit = (subject, body = "") => parseCommit({ sha: "0123456789abcdef", subject, body });
-
-describe("classifyPaths", () => {
-  it("puts library paths in the library", () => {
-    assert.deepEqual(classifyPaths(["src/core/tier.ts", "test/core/tier.test.ts"]), ["library"]);
-    assert.deepEqual(classifyPaths(["README.md"]), ["library"]);
-    assert.deepEqual(classifyPaths(["scripts/build-boot.mjs", "tsup.config.ts"]), ["library"]);
-  });
-
-  it("puts docs and worker paths in the website", () => {
-    assert.deepEqual(classifyPaths(["docs/index.html", "docs/README.md"]), ["website"]);
-    assert.deepEqual(classifyPaths(["worker/src/handler.ts"]), ["website"]);
-  });
-
-  it("puts a commit touching both in both", () => {
-    assert.deepEqual(classifyPaths(["worker/README.md", "src/core/x.ts", "docs/api.html"]), ["library", "website"]);
-  });
-
-  it("leaves out tests, tooling and assets", () => {
-    const tooling = ["test/a.test.ts", ".github/workflows/release.yml", "eslint.config.js", "package-lock.json"];
-    assert.deepEqual(classifyPaths([...tooling, "assets/brand/og.png", "scripts/size.mjs", "srcx/a.ts"]), []);
-  });
-
-  it("counts package.json only when a runtime field changed", () => {
-    assert.deepEqual(classifyPaths(["package.json"], false), []);
-    assert.deepEqual(classifyPaths(["package.json"], true), ["library"]);
-  });
-});
-
-describe("packageRuntimeChanged", () => {
-  const base = { name: "framebudget", version: "0.1.0", dependencies: { a: "1" }, devDependencies: { b: "1" } };
-
-  it("ignores devDependencies, scripts and tool config", () => {
-    const after = { ...base, devDependencies: { b: "2" }, scripts: { test: "x" }, "lint-staged": {} };
-    assert.equal(packageRuntimeChanged(base, after), false);
-  });
-
-  it("sees dependencies, peerDependencies, exports and version", () => {
-    assert.equal(packageRuntimeChanged(base, { ...base, dependencies: { a: "2" } }), true);
-    assert.equal(packageRuntimeChanged(base, { ...base, peerDependencies: { react: ">=18" } }), true);
-    assert.equal(packageRuntimeChanged(base, { ...base, exports: { ".": "./dist/index.js" } }), true);
-    assert.equal(packageRuntimeChanged(base, { ...base, version: "0.2.0" }), true);
-    assert.equal(packageRuntimeChanged(null, base), true);
-  });
-});
 
 describe("parseCommit", () => {
   it("reads type, scope and description", () => {
@@ -97,28 +53,105 @@ describe("groupOf", () => {
   });
 });
 
-describe("groupRelease", () => {
-  it("files each shipped commit under its areas and renders empty areas as no changes", () => {
-    const shipped = [
-      { ...commit("feat(core): a"), sha: "aaaaaaa1", areas: ["library"], group: "features" },
-      { ...commit("fix: b"), sha: "bbbbbbb2", areas: ["library", "website"], group: "fixes" },
-      { ...commit("chore: c"), sha: "ccccccc3", areas: ["library"], group: null },
-    ];
-    const release = groupRelease(shipped);
-    assert.deepEqual(
-      release.library.features.map((entry) => entry.sha),
-      ["aaaaaaa1"],
+const SECTIONS = [
+  { id: "core", title: "@framebudget/core", paths: ["packages/core/"] },
+  { id: "react", title: "@framebudget/react", paths: ["packages/react/"] },
+  { id: "framebudget", title: "framebudget", paths: ["packages/framebudget/", "README.md"] },
+];
+
+const raw = (sha, subject, files) => ({ sha, subject, body: "", files });
+
+describe("classifyCommits", () => {
+  it("keeps commits that touch a section, with their section ids and group", () => {
+    const classified = classifyCommits(
+      [
+        raw("a1", "feat(react): a", ["packages/react/src/use-tier.ts"]),
+        raw("b2", "chore(deps): b", ["packages/core/package.json"]),
+        raw("c3", "ci: c", [".github/workflows/ci.yml", "package-lock.json"]),
+      ],
+      SECTIONS,
     );
     assert.deepEqual(
-      release.website.fixes.map((entry) => entry.sha),
+      classified.map(({ sha, sections, group }) => ({ sha, sections, group })),
+      [
+        { sha: "a1", sections: ["react"], group: "features" },
+        { sha: "b2", sections: ["core"], group: null },
+      ],
+    );
+  });
+
+  it("files a commit touching two sections in both, in config order", () => {
+    const [both] = classifyCommits([raw("d4", "fix: d", ["README.md", "packages/core/src/a.ts"])], SECTIONS);
+    assert.deepEqual(both.sections, ["core", "framebudget"]);
+  });
+
+  it("drops chore(release) commits even when they touch section paths", () => {
+    const release = raw("e5", "chore(release): v0.3.0", ["packages/core/package.json", "CHANGELOG.md"]);
+    assert.deepEqual(classifyCommits([release], SECTIONS), []);
+  });
+});
+
+describe("changedOutputs", () => {
+  it("counts any classified commit, changelog-worthy or not, per section", () => {
+    const classified = classifyCommits([raw("b2", "chore(deps): b", ["packages/core/package.json"])], SECTIONS);
+    assert.deepEqual(changedOutputs(classified, SECTIONS), {
+      changed: true,
+      changed_core: true,
+      changed_react: false,
+      changed_framebudget: false,
+    });
+  });
+
+  it("reports nothing changed when only release and tooling commits landed", () => {
+    const commits = [
+      raw("e5", "chore(release): v0.3.0", ["packages/react/package.json"]),
+      raw("f6", "ci: f", ["scripts/release/notes.mjs"]),
+    ];
+    const outputs = changedOutputs(classifyCommits(commits, SECTIONS), SECTIONS);
+    assert.equal(outputs.changed, false);
+    assert.equal(outputs.changed_react, false);
+  });
+});
+
+describe("groupRelease", () => {
+  const shipped = [
+    { ...commit("feat(core): a"), sha: "aaaaaaa1", sections: ["core"], group: "features" },
+    { ...commit("fix: b"), sha: "bbbbbbb2", sections: ["core", "framebudget"], group: "fixes" },
+    { ...commit("chore: c"), sha: "ccccccc3", sections: ["react"], group: null },
+  ];
+
+  it("files each shipped commit under its sections and renders them by config title", () => {
+    const release = groupRelease(shipped, SECTIONS);
+    assert.deepEqual(
+      release.framebudget.fixes.map((entry) => entry.sha),
       ["bbbbbbb2"],
     );
-    const section = renderChangelogSection({ version: "1.0.0", date: "2026-10-03", release, repo: null });
+    const section = renderChangelogSection({ version: "1.0.0", date: "2026-10-03", release, sections: SECTIONS });
     assert.match(
       section,
-      /^## \[1\.0\.0\] - 2026-10-03\n\n### Library\n\n#### Features\n\n- \*\*core:\*\* a \(aaaaaaa\)/,
+      /^## \[1\.0\.0\] - 2026-10-03\n\n### @framebudget\/core\n\n#### Features\n\n- \*\*core:\*\* a \(aaaaaaa\)\n\n#### Fixes\n\n- b \(bbbbbbb\)\n\n/,
     );
-    assert.match(section, /### Website\n\n#### Fixes\n\n- b \(bbbbbbb\)\n$/);
-    assert.match(renderChangelogSection({ version: "1.0.1", date: "d", release: groupRelease([]) }), /No changes\./);
+    assert.match(
+      section,
+      /### @framebudget\/react\n\nNo changes\.\n\n### framebudget\n\n#### Fixes\n\n- b \(bbbbbbb\)\n$/,
+    );
+  });
+
+  it("counts each section and lists every section of a highlight", () => {
+    const release = groupRelease(shipped, SECTIONS);
+    const art = artNotes({ version: "1.0.0", date: "d", label: "Library release", release, sections: SECTIONS });
+    assert.equal(art.label, "Library release");
+    assert.deepEqual(
+      art.counts.map(({ id, count }) => [id, count]),
+      [
+        ["core", 2],
+        ["react", 0],
+        ["framebudget", 1],
+      ],
+    );
+    assert.deepEqual(art.highlights, [
+      { text: "a", group: "features", sections: ["@framebudget/core"] },
+      { text: "b", group: "fixes", sections: ["@framebudget/core", "framebudget"] },
+    ]);
   });
 });

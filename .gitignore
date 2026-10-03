@@ -1,11 +1,6 @@
 node_modules/
 dist/
-src/boot/source.generated.ts
-.vite/
+packages/core/src/boot/source.generated.ts
+# pack.mjs copies the root README.md here before packing
+packages/framebudget/README.md
 .DS_Store
-
-# HyperFrames render cache and throwaway outputs; the final render and poster stay
-assets/video/.hyperframes/
-assets/video/out/frames/
-assets/video/out/preview-*.wav
-assets/video/out/framebudget-music-only.mp4

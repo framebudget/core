@@ -1,0 +1,89 @@
+# Publishes a past release's package tarballs to npmjs, for releases cut before the
+# NPM_TOKEN secret existed (the release workflow skips npmjs without it). The
+# tarballs come from the immutable release itself: each one is checked against the
+# release attestation and its build provenance from the release workflow before
+# anything is published, so npmjs serves the exact bytes the release lists.
+name: Publish to npmjs
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag whose tarballs to publish, e.g. v0.3.0
+        required: true
+        type: string
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.tag }} to npmjs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Check the tag and the token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::\"$TAG\" is not a release tag: expected vX.Y.Z or vX.Y.Z-prerelease."
+            exit 1
+          fi
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::The NPM_TOKEN secret is not set."
+            exit 1
+          fi
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          if [[ "$TAG" == *-* ]]; then echo "DIST_TAG=next"; else echo "DIST_TAG=latest"; fi >> "$GITHUB_ENV"
+      - name: Download the release tarballs
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.tgz' --dir tarballs
+          ls -l tarballs
+      - name: Verify each tarball
+        run: |
+          gh release verify "$TAG" --repo "$GITHUB_REPOSITORY"
+          for file in tarballs/*.tgz; do
+            gh release verify-asset "$TAG" "$file" --repo "$GITHUB_REPOSITORY"
+            gh attestation verify "$file" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml"
+          done
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      # Dependencies first, so framebudget never points at an unpublished version.
+      # A version already on npmjs is skipped; npm versions are permanent.
+      - name: Publish the three packages
+        working-directory: tarballs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for name in @framebudget/core @framebudget/react framebudget; do
+            file=""
+            for tarball in *.tgz; do
+              if [ "$(tar -xzOf "$tarball" package/package.json | jq -r .name)" = "$name" ]; then file="$tarball"; fi
+            done
+            if [ -z "$file" ]; then
+              echo "::error::$TAG has no tarball for $name."
+              exit 1
+            fi
+            if npm view "$name@$VERSION" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+              echo "::notice::$name@$VERSION is already on npmjs."
+              continue
+            fi
+            npm publish "./$file" --registry https://registry.npmjs.org --provenance --access public --tag "$DIST_TAG"
+          done

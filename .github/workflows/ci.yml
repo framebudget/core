@@ -1,11 +1,9 @@
 # Gates for pull requests that are ready for review. Draft pull requests skip
 # every job; marking one ready for review starts the run.
 #
-#   changes   which parts the pull request touches (git diff against the base)
-#   library   format, lint, typecheck, tests (vitest and the release scripts), build and size
-#   docs      builds the library, then type-checks and builds the website
-#   worker    typecheck and tests of the Cloudflare Worker
-#   gate      one required check: fails when a job that ran failed, passes when the rest skipped
+#   library   format, lint, typecheck, tests (vitest and the release scripts), build, size,
+#             and pack (checks the three tarballs and smoke-installs them)
+#   gate      one required check: fails when the library job failed or was cancelled
 name: CI
 
 on:
@@ -19,46 +17,9 @@ concurrency:
 permissions: {}
 
 jobs:
-  changes:
-    name: Detect changes
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      library: ${{ steps.filter.outputs.library }}
-      docs: ${{ steps.filter.outputs.docs }}
-      worker: ${{ steps.filter.outputs.worker }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Classify the changed files
-        id: filter
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
-          printf 'Changed files:\n%s\n' "$files"
-          matches() { printf '%s\n' "$files" | grep -qE "$1" && echo true || echo false; }
-          # A change to this workflow runs everything, so the gates themselves get tested.
-          ci='^\.github/workflows/ci\.yml$'
-          library='^(src/|test/|scripts/|package(-lock)?\.json$|tsconfig\.json$|tsup\.config\.ts$|vitest\.config\.ts$|eslint\.config\.js$|\.prettier(rc\.json|ignore)$)'
-          # The website builds against the library and turns README.md into llms-full.txt.
-          docs='^(docs/|src/|scripts/build-boot\.mjs$|package(-lock)?\.json$|tsup\.config\.ts$|README\.md$)'
-          # The worker tests import the library's report builder (src/core) and its bench types.
-          worker='^(worker/|src/core/|src/benchmark/benchmark\.types\.ts$)'
-          {
-            echo "library=$(matches "$library|$ci")"
-            echo "docs=$(matches "$docs|$ci")"
-            echo "worker=$(matches "$worker|$ci")"
-          } >> "$GITHUB_OUTPUT"
-
   library:
     name: Library
-    needs: changes
-    if: needs.changes.outputs.library == 'true'
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -75,49 +36,11 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run size
-
-  docs:
-    name: Website
-    needs: changes
-    if: needs.changes.outputs.docs == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            docs/package-lock.json
-      - run: npm ci
-      - run: npm run build
-      - run: npm ci --prefix docs
-      - run: npm run build --prefix docs
-
-  worker:
-    name: Worker
-    needs: changes
-    if: needs.changes.outputs.worker == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: worker/package-lock.json
-      - run: npm ci --prefix worker
-      - run: npm run typecheck --prefix worker
-      - run: npm test --prefix worker
+      - run: node scripts/pack.mjs --out "$RUNNER_TEMP/pack"
 
   gate:
     name: CI
-    needs: [changes, library, docs, worker]
+    needs: [library]
     if: always() && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions: {}
@@ -128,5 +51,5 @@ jobs:
         run: |
           echo "Job results: $RESULTS"
           case " $RESULTS " in
-            *" failure "* | *" cancelled "*) exit 1 ;;
+            *" failure "* | *" cancelled "* | *" skipped "*) exit 1 ;;
           esac
