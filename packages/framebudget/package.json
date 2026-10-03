@@ -1,6 +1,6 @@
 {
   "name": "framebudget",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Decides, per device, which visual effects a site can afford. Keep the effects. Lose the stutter.",
   "license": "MIT",
   "homepage": "https://framebudget.dev",
@@ -54,8 +54,8 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@framebudget/core": "0.2.1",
-    "@framebudget/react": "0.2.1"
+    "@framebudget/core": "0.3.0",
+    "@framebudget/react": "0.3.0"
   },
   "peerDependencies": {
     "react": ">=18"

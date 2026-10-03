@@ -1,6 +1,6 @@
 {
   "name": "@framebudget/react",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "React hooks for framebudget: useBudget, useTier and BudgetProvider.",
   "license": "MIT",
   "homepage": "https://framebudget.dev",
@@ -42,7 +42,7 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@framebudget/core": "0.2.1"
+    "@framebudget/core": "0.3.0"
   },
   "peerDependencies": {
     "react": ">=18"
