@@ -74,7 +74,7 @@ const maxFilesPerFolder = {
 };
 
 export default defineConfig(
-  { ignores: ["dist/**", "node_modules/**", "src/boot/source.generated.ts"] },
+  { ignores: ["dist/**", "node_modules/**", "src/boot/source.generated.ts", "docs/**", "assets/**"] },
   js.configs.recommended,
   {
     files: TS_FILES,

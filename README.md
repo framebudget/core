@@ -238,7 +238,9 @@ npm run format     # prettier
 npm run size       # minified and gzipped sizes per entry
 ```
 
-A pre-commit hook (husky and lint-staged, installed by `npm install` at the repository root) formats and lints the staged files, then runs the typecheck, the full lint and the tests.
+The library is the repository root. `docs/` is the landing page and API reference (a separate Vite project that links the library, see `docs/README.md`), `assets/brand/` holds the logo, fonts and tokens, and `assets/video/` the HyperFrames launch video.
+
+A pre-commit hook (husky and lint-staged, installed by `npm install`) formats and lints the staged files, then runs the typecheck, the full lint and the tests.
 
 The source is layered, and `eslint.config.js` enforces the layers:
 

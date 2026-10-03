@@ -1,2 +1,5 @@
-dist/
+dist
 src/boot/source.generated.ts
+*.md
+docs
+assets
