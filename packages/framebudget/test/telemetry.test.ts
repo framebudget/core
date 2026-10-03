@@ -79,7 +79,10 @@ describe("calibration fetch", () => {
   it("stores the fetched calibration for the next visit without changing this one", async () => {
     const local = new FakeStorage();
     const f = fetcher(remote);
-    const { b } = await loadedPage({ local, fetch: f.fetch }, { ...SHARE, calibrationUrl: "https://collect.example/cal.json" });
+    const { b } = await loadedPage(
+      { local, fetch: f.fetch },
+      { ...SHARE, calibrationUrl: "https://collect.example/cal.json" },
+    );
     expect(f.calls).toHaveLength(1);
     expect(f.calls[0]!.init).toMatchObject({ credentials: "omit" });
     expect(b.snapshot().calibration.effects.parallax!.threshold).toBe(70);

@@ -114,10 +114,18 @@ describe("boot script", () => {
     const forced = runBoot(bootScript, { location: { search: "?a=1&framebudget-tier=lite" }, sessionStorage: session });
     expect(forced.attrs).toEqual({ "data-framebudget": "Lite", "data-framebudget-effects": "hover" });
 
-    const nextPage = runBoot(bootScript, { location: { search: "" }, sessionStorage: session, localStorage: cached(130) });
+    const nextPage = runBoot(bootScript, {
+      location: { search: "" },
+      sessionStorage: session,
+      localStorage: cached(130),
+    });
     expect(nextPage.attrs["data-framebudget"]).toBe("Lite");
 
-    const auto = runBoot(bootScript, { location: { search: "?framebudget-tier=auto" }, sessionStorage: session, localStorage: cached(130) });
+    const auto = runBoot(bootScript, {
+      location: { search: "?framebudget-tier=auto" },
+      sessionStorage: session,
+      localStorage: cached(130),
+    });
     expect(auto.attrs["data-framebudget"]).toBe("Full");
     expect(session.getItem("framebudget-tier")).toBeNull();
   });

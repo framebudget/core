@@ -1,5 +1,11 @@
 import { createKernels, runBenchmark, type BenchOptions, type BenchResult } from "./bench";
-import { calibrationKey, defaultCalibration, mergeCalibration, type Calibration, type CalibrationPatch } from "./calibration";
+import {
+  calibrationKey,
+  defaultCalibration,
+  mergeCalibration,
+  type Calibration,
+  type CalibrationPatch,
+} from "./calibration";
 import { clock, safe, type Scope, type ScoreSource } from "./env";
 import { readForcedTier, readSimulatedScore } from "./force";
 import { readHints, type Hints } from "./hints";
@@ -68,7 +74,9 @@ export function initialScore(
   if (cached !== undefined) return { score: cached, source: "cached", cold: null };
   if (ctx.forced) return { score: ctx.cal.fallbackScore, source: "fallback", cold: null };
   const cold = safe(() => runBenchmark(benchOptions(scope, ctx.cal, coldMs, false))) || null;
-  return cold ? { score: cold.score, source: "cold", cold } : { score: ctx.cal.fallbackScore, source: "fallback", cold: null };
+  return cold
+    ? { score: cold.score, source: "cold", cold }
+    : { score: ctx.cal.fallbackScore, source: "fallback", cold: null };
 }
 
 export const TIER_ATTRIBUTE = "data-framebudget";

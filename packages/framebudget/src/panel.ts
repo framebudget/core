@@ -29,7 +29,9 @@ const fmt = (n: number | null | undefined, digits = 0): string =>
   typeof n === "number" && isFinite(n) ? n.toFixed(digits) : "n/a";
 
 function section(parent: HTMLElement, title: string, rows: [string, string][]): void {
-  parent.appendChild(el("div", `margin:10px 0 4px;color:${COLORS.muted};text-transform:uppercase;letter-spacing:.08em`, title));
+  parent.appendChild(
+    el("div", `margin:10px 0 4px;color:${COLORS.muted};text-transform:uppercase;letter-spacing:.08em`, title),
+  );
   for (const [label, value] of rows) {
     const row = el("div", "display:flex;justify-content:space-between;gap:12px");
     row.appendChild(el("span", `color:${COLORS.muted}`, label));
@@ -82,12 +84,20 @@ function render(body: HTMLElement, s: BudgetSnapshot, b: Budget): void {
     "Effects (threshold, cost)",
     Object.keys(s.calibration.effects).map((name) => {
       const def = s.calibration.effects[name]!;
-      return [`${name} (${def.threshold}, ${def.cost})`, s.effects.includes(name) ? "on" : `off: ${s.off[name] || "unknown"}`];
+      return [
+        `${name} (${def.threshold}, ${def.cost})`,
+        s.effects.includes(name) ? "on" : `off: ${s.off[name] || "unknown"}`,
+      ];
     }),
   );
 
   const fps = Object.keys(s.fps);
-  if (fps.length) section(body, "Frames per second", fps.map((k) => [k, fmt(s.fps[k])]));
+  if (fps.length)
+    section(
+      body,
+      "Frames per second",
+      fps.map((k) => [k, fmt(s.fps[k])]),
+    );
 
   const buttons = el("div", "display:flex;flex-wrap:wrap;gap:6px;margin-top:10px");
   for (const t of [...TIERS, "auto" as const]) {

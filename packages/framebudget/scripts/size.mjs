@@ -30,5 +30,7 @@ const rows = [
 
 const kb = (n) => (n / 1024).toFixed(2) + " KB";
 for (const [name, code] of rows) {
-  console.log(`${name.padEnd(44)} ${kb(code.length).padStart(9)} min ${kb(gzipSync(code, { level: 9 }).length).padStart(9)} gzip`);
+  console.log(
+    `${name.padEnd(44)} ${kb(code.length).padStart(9)} min ${kb(gzipSync(code, { level: 9 }).length).padStart(9)} gzip`,
+  );
 }

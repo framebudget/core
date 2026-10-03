@@ -170,7 +170,8 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
       ctx.stored.qualified = decision.qualified;
       persist();
     }
-    if (always || (prev && (prev.tier !== decision.tier || prev.effects.join() !== decision.effects.join()))) emit(reason);
+    if (always || (prev && (prev.tier !== decision.tier || prev.effects.join() !== decision.effects.join())))
+      emit(reason);
   }
 
   function recalibrate(): void {
@@ -187,7 +188,10 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
       ? frameSource
       : allowed
           .slice()
-          .sort((a, b) => cal.effects[b]!.cost - cal.effects[a]!.cost || cal.effects[b]!.threshold - cal.effects[a]!.threshold)[0];
+          .sort(
+            (a, b) =>
+              cal.effects[b]!.cost - cal.effects[a]!.cost || cal.effects[b]!.threshold - cal.effects[a]!.threshold,
+          )[0];
     if (!victim) return false;
     stepped.push(victim);
     if (ctx.simulated === null) recordStutter(ctx.stored, victim); // recompute persists it
@@ -334,7 +338,14 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
       cold = first.cold;
     }
     const input = c.simulated !== null ? c.simulated : score;
-    decision = decide({ cal: c.cal, score: input, hints: c.hints, prev, learned: c.simulated !== null ? [] : learned, forced: c.forced });
+    decision = decide({
+      cal: c.cal,
+      score: input,
+      hints: c.hints,
+      prev,
+      learned: c.simulated !== null ? [] : learned,
+      forced: c.forced,
+    });
     applyToDocument(s, decision.tier, decision.effects);
 
     safe(() => {

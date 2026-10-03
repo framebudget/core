@@ -9,6 +9,26 @@
     "build": "npm run build -w framebudget",
     "test": "npm run test -w framebudget",
     "typecheck": "npm run typecheck -w framebudget",
-    "size": "npm run size -w framebudget"
+    "size": "npm run size -w framebudget",
+    "lint": "npm run lint -w framebudget",
+    "format": "npm run format -w framebudget",
+    "prepare": "husky"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2",
+    "esbuild": "^0.28.2"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0"
+  },
+  "lint-staged": {
+    "packages/framebudget/**/*.{ts,js,mjs}": [
+      "eslint --max-warnings=0 --fix",
+      "prettier --write"
+    ],
+    "packages/framebudget/**/*.json": [
+      "prettier --write"
+    ]
   }
 }

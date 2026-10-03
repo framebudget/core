@@ -144,10 +144,7 @@ export function runBenchmark(o: BenchOptions): BenchResult | null {
  * Same measurement, one round per task: `pause` resolves when the main thread
  * may continue, so a long warm run never becomes one long task.
  */
-export async function runBenchmarkAsync(
-  o: BenchOptions,
-  pause: () => Promise<unknown>,
-): Promise<BenchResult | null> {
+export async function runBenchmarkAsync(o: BenchOptions, pause: () => Promise<unknown>): Promise<BenchResult | null> {
   const p = plan(o);
   if (!p) return null;
   const run = newRun(o);

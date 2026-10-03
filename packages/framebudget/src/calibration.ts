@@ -108,10 +108,7 @@ function mergeKnown(target: Record<string, unknown>, patch: unknown): void {
  * validated, so patches can come from storage or the network. A new effect is
  * only added when the patch gives both its threshold and its cost.
  */
-export function mergeCalibration(
-  base: Calibration,
-  ...patches: (CalibrationPatch | null | undefined)[]
-): Calibration {
+export function mergeCalibration(base: Calibration, ...patches: (CalibrationPatch | null | undefined)[]): Calibration {
   const out = JSON.parse(JSON.stringify(base)) as Calibration;
   for (const patch of patches) {
     mergeKnown(out as unknown as Record<string, unknown>, patch);

@@ -10,7 +10,9 @@ export function visitsBeforeRetry(cal: Calibration, entry: BlockEntry): number {
 
 /** Effects that stuttered before and are not yet up for a retry. */
 export function learnedBlocks(state: StoredState, cal: Calibration): string[] {
-  return Object.keys(state.blocked).filter((name) => state.blocked[name]!.clean < visitsBeforeRetry(cal, state.blocked[name]!));
+  return Object.keys(state.blocked).filter(
+    (name) => state.blocked[name]!.clean < visitsBeforeRetry(cal, state.blocked[name]!),
+  );
 }
 
 /** The governor stepped this effect down: start without it on the next visits. */

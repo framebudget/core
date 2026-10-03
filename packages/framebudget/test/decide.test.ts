@@ -57,7 +57,10 @@ describe("decide", () => {
   });
 
   it("turns data-heavy effects off under Save-Data and on 2g", () => {
-    for (const h of [{ ...hints, saveData: true }, { ...hints, slowNetwork: true }]) {
+    for (const h of [
+      { ...hints, saveData: true },
+      { ...hints, slowNetwork: true },
+    ]) {
       const d = run({ score: 130, hints: h });
       expect(d.off.sound).toBe("data");
       expect(d.off.canvasHiRes).toBe("data");
