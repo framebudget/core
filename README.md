@@ -301,6 +301,6 @@ git tag v0.3.0 && git push origin v0.3.0
 4. deploys the site and the worker to Cloudflare;
 5. creates a draft release with the notes, the art, the tarball and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
 
-Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`.
+Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/framebudget` (build provenance: the workflow run and the commit that produced it).
 
 Preview the notes with `npm run release:notes -- --tag v0.2.0 --dry-run` (HEAD stands in for a tag that does not exist yet), and the art with `npm run release:art -- --version 0.2.0 --date 2026-10-03 --notes notes.json --out art.png` (headless Chrome, `CHROME_PATH` to override).
