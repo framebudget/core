@@ -24,7 +24,7 @@ export function nav(page: "home" | "api" | "privacy"): string {
       <a class="nav__section" href="/#how">How it works</a>
       <a class="nav__section" href="/#simulator">Simulator</a>
       <a class="nav__section" href="/#code">Code</a>
-      <a href="/api.html"${current("api")} data-cuelume-navigate>API</a>
+      <a href="/api"${current("api")} data-cuelume-navigate>API</a>
     </nav>
     <button class="sound-toggle press" type="button" aria-pressed="true" aria-describedby="sound-state" data-sound-toggle data-cuelume-toggle>${SPEAKER}<span class="visually-hidden">Interface sounds</span></button>
     <span class="visually-hidden" id="sound-state" data-sound-state></span>
@@ -46,8 +46,8 @@ export function footer(): string {
       <a href="/#code">Code</a>
       <a href="/#effects">Effects and tiers</a>
       <a href="/#faq">Questions</a>
-      <a href="/api.html">API reference</a>
-      <a href="/privacy.html">Privacy</a>
+      <a href="/api">API reference</a>
+      <a href="/privacy">Privacy</a>
     </nav>
     <p class="footer__legal">framebudget is MIT licensed. Archivo and Martian Mono are used under the SIL Open Font License 1.1. Interface sounds by cuelume.</p>
   </div>
@@ -71,7 +71,7 @@ export function dock(): string {
  */
 export function shareNote(): string {
   return `<aside class="share-note" aria-label="Anonymous measurements" hidden data-share-note>
-  <p class="share-note__text">This page shares anonymous frame measurements from your device to calibrate framebudget. <a href="/privacy.html">What is measured</a></p>
+  <p class="share-note__text">This page shares anonymous frame measurements from your device to calibrate framebudget. <a href="/privacy">What is measured</a></p>
   <span class="share-note__actions">
     <button class="share-note__no press" type="button" data-share-no data-cuelume-toggle>Don't share</button>
     <button class="share-note__ok press" type="button" data-share-ok data-cuelume-tap>OK</button>
