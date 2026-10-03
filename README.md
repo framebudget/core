@@ -274,6 +274,16 @@ Lint limits: 80 lines per file and 60 per function (blank and comment lines excl
 
 `src/boot/source.generated.ts` is generated from `src/boot/runtime.ts` by `scripts/build-boot.mjs`. The build, test and typecheck scripts regenerate it.
 
+### Pull request checks
+
+`.github/workflows/ci.yml` runs on pull requests that are ready for review; drafts skip it until they are marked ready. Each part runs only when the pull request touches it:
+
+- **Library** (`src/`, `test/`, `scripts/`, root configs and manifests): format check, lint, typecheck, tests, build and size.
+- **Website** (`docs/`, the library source, `README.md`): builds the library, then type-checks and builds the site.
+- **Worker** (`worker/`, `src/core/`): typecheck and tests.
+
+The `CI` job sums them up: it fails when a part that ran failed, and passes when the others were skipped. A change to the workflow itself runs every part.
+
 ### Releases
 
 Create a release by hand on GitHub with a new tag `vX.Y.Z` (or `vX.Y.Z-rc.N`), above the previous one. `.github/workflows/release.yml` then:
