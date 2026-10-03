@@ -294,9 +294,18 @@ jobs:
             --title "$TAG" --notes-file body.md "${flags[@]}"
       - name: Publish the release
         run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+      # GitHub signs the release attestation a moment after publishing; wait for
+      # it (up to about two minutes) before verifying the release and each asset.
       - name: Verify the release attestation
         run: |
-          gh release verify "$TAG" --repo "$GITHUB_REPOSITORY"
+          for attempt in $(seq 1 12); do
+            if gh release verify "$TAG" --repo "$GITHUB_REPOSITORY"; then break; fi
+            if [ "$attempt" -eq 12 ]; then
+              echo "::error::No release attestation for $TAG after waiting."
+              exit 1
+            fi
+            sleep 10
+          done
           for file in assets/*; do
             gh release verify-asset "$TAG" "$file" --repo "$GITHUB_REPOSITORY"
           done
