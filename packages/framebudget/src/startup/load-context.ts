@@ -1,6 +1,6 @@
 import type { CalibrationPatch } from "../core/calibration/calibration.types";
 import { defaultCalibration } from "../core/calibration/default-calibration";
-import { mergeCalibration } from "../core/calibration/merge-calibration";
+import { mergeCalibration } from "../core/calibration/merge/merge-calibration";
 import { readHints } from "../platform/hints/read-hints";
 import { readForcedTier } from "../platform/overrides/forced-tier";
 import { readSimulatedScore } from "../platform/overrides/simulated-score";

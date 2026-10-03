@@ -1,10 +1,10 @@
 import { Tier } from "../core/tier/tier.enum";
 import type { Budget, CreateBudgetOptions } from "./budget.types";
-import { buildSnapshot } from "./build-snapshot";
-import { configureBudget, registerEffect } from "./configure-budget";
+import { buildSnapshot } from "./decision/build-snapshot";
+import { configureBudget, registerEffect } from "./commands/configure-budget";
 import { createBudgetState } from "./create-budget-state";
-import { assertSimulatedScore, forceTier, simulateScore } from "./session-overrides";
-import { startBudget } from "./start-budget";
+import { assertSimulatedScore, forceTier, simulateScore } from "./commands/session-overrides";
+import { startBudget } from "./lifecycle/start-budget";
 
 export function createBudget(init: CreateBudgetOptions = {}): Budget {
   const state = createBudgetState(init);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultCalibration } from "../../../src/core/calibration/default-calibration";
-import { mergeCalibration } from "../../../src/core/calibration/merge-calibration";
+import { mergeCalibration } from "../../../src/core/calibration/merge/merge-calibration";
 
 describe("mergeCalibration", () => {
   it("ignores invalid values from storage or the network", () => {

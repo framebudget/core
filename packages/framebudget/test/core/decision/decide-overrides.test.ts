@@ -5,7 +5,7 @@ import type { DecideInput } from "../../../src/core/decision/decision.types";
 import type { Hints } from "../../../src/core/device/device.types";
 import { tierEffects } from "../../../src/core/calibration/tier-effects";
 import { Tier } from "../../../src/core/tier/tier.enum";
-import { mergeCalibration } from "../../../src/core/calibration/merge-calibration";
+import { mergeCalibration } from "../../../src/core/calibration/merge/merge-calibration";
 
 const hints: Hints = { saveData: false, slowNetwork: false, reducedMotion: false, gpc: false };
 const calibration = defaultCalibration;

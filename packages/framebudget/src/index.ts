@@ -11,7 +11,7 @@ export type {
 export { Tier } from "./core/tier/tier.enum";
 export { TIERS } from "./core/tier/tier-order";
 export { defaultCalibration } from "./core/calibration/default-calibration";
-export { mergeCalibration } from "./core/calibration/merge-calibration";
+export { mergeCalibration } from "./core/calibration/merge/merge-calibration";
 export { tierEffects } from "./core/calibration/tier-effects";
 export type { Calibration, CalibrationPatch, EffectDefinition, KernelName } from "./core/calibration/calibration.types";
 export { defaultGovernorOptions } from "./governor/default-governor-options";

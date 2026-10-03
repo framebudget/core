@@ -1,11 +1,11 @@
 import type { Budget } from "../budget/budget.types";
-import { renderEffectsSection } from "./render-effects-section";
-import { renderForceButtons } from "./render-force-buttons";
-import { renderFpsSection } from "./render-fps-section";
-import { renderHeader } from "./render-header";
-import { renderHintsSection } from "./render-hints-section";
-import { renderKernelSection } from "./render-kernel-section";
-import { renderScoreSection } from "./render-score-section";
+import { renderEffectsSection } from "./sections/render-effects-section";
+import { renderForceButtons } from "./sections/render-force-buttons";
+import { renderFpsSection } from "./sections/render-fps-section";
+import { renderHeader } from "./sections/render-header";
+import { renderHintsSection } from "./sections/render-hints-section";
+import { renderKernelSection } from "./sections/render-kernel-section";
+import { renderScoreSection } from "./sections/render-score-section";
 
 /** Replaces the panel body with the budget's current snapshot. */
 export function renderPanel(body: HTMLElement, budget: Budget): void {

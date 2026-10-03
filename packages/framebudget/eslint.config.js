@@ -1,5 +1,7 @@
 // Lint rules for the framebudget library. The rules are hard limits: every
 // one is an error, and CI or the pre-commit hook fails on any of them.
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import prettier from "eslint-config-prettier";
@@ -46,6 +48,31 @@ const layer = (files, forbidden) => ({
   },
 });
 
+// No folder holds more than `max` files (subfolders do not count): past that,
+// group the files by concern in subfolders. Generated files are not counted.
+const maxFilesPerFolder = {
+  meta: {
+    type: "suggestion",
+    schema: [{ type: "object", properties: { max: { type: "integer", minimum: 1 } }, additionalProperties: false }],
+    messages: { tooMany: "{{folder}} holds {{count}} files (max {{max}}). Group them by concern in subfolders." },
+  },
+  create(context) {
+    const { max } = context.options[0];
+    return {
+      Program(node) {
+        const folder = path.dirname(context.filename);
+        const count = readdirSync(folder, { withFileTypes: true }).filter(
+          (entry) => entry.isFile() && !entry.name.includes(".generated."),
+        ).length;
+        if (count > max) {
+          const relative = path.relative(context.cwd, folder);
+          context.report({ node, messageId: "tooMany", data: { folder: relative, count, max } });
+        }
+      },
+    };
+  },
+};
+
 export default defineConfig(
   { ignores: ["dist/**", "node_modules/**", "src/boot/source.generated.ts"] },
   js.configs.recommended,
@@ -59,7 +86,7 @@ export default defineConfig(
       },
       globals: { ...globals.browser },
     },
-    plugins: { functional, "import-x": importX },
+    plugins: { functional, "import-x": importX, local: { rules: { "max-files-per-folder": maxFilesPerFolder } } },
     rules: {
       // Size and shape.
       "max-lines": ["error", { max: 80, skipBlankLines: true, skipComments: true }],
@@ -69,6 +96,7 @@ export default defineConfig(
       "max-nested-callbacks": ["error", 3],
       "max-statements": ["error", 20],
       complexity: ["error", 10],
+      "local/max-files-per-folder": ["error", { max: 8 }],
 
       // Side effects and state.
       "no-param-reassign": "error",
@@ -162,7 +190,12 @@ export default defineConfig(
   },
   {
     files: ["*.config.ts", "eslint.config.js"],
-    rules: { "import-x/no-default-export": "off", "unicorn/no-top-level-side-effects": "off" },
+    rules: {
+      "import-x/no-default-export": "off",
+      "unicorn/no-top-level-side-effects": "off",
+      // The package root holds manifests and configs, not source.
+      "local/max-files-per-folder": "off",
+    },
   },
   {
     files: ["scripts/**/*.mjs", "eslint.config.js"],
