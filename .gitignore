@@ -1,10 +1,11 @@
 node_modules/
 dist/
+src/boot/source.generated.ts
 .vite/
 .DS_Store
 
 # HyperFrames render cache and throwaway outputs; the final render and poster stay
-video/.hyperframes/
-video/out/frames/
-video/out/preview-*.wav
-video/out/framebudget-music-only.mp4
+assets/video/.hyperframes/
+assets/video/out/frames/
+assets/video/out/preview-*.wav
+assets/video/out/framebudget-music-only.mp4
