@@ -1,0 +1,52 @@
+{
+  "name": "@framebudget/core",
+  "version": "0.2.1",
+  "description": "The framebudget core without React: decides, per device, which visual effects a site can afford.",
+  "license": "MIT",
+  "homepage": "https://framebudget.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/framebudget/core.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/framebudget/core/issues"
+  },
+  "keywords": [
+    "performance",
+    "animation",
+    "frame budget",
+    "device capability",
+    "adaptive loading",
+    "prefers-reduced-motion"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./boot": {
+      "types": "./dist/boot.d.ts",
+      "import": "./dist/boot.js"
+    },
+    "./panel": {
+      "types": "./dist/panel.d.ts",
+      "import": "./dist/panel.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "boot": "node scripts/build-boot.mjs",
+    "build": "node scripts/build-boot.mjs && tsup"
+  }
+}

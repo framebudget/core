@@ -12,7 +12,8 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 const TYPE_FILES = ["**/*.types.ts", "**/*.enum.ts"];
-const TS_FILES = ["src/**/*.ts", "test/**/*.ts", "*.config.ts"];
+const TS_FILES = ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts", "*.config.ts", "packages/*/*.config.ts"];
+const CORE = "packages/core/src";
 
 // Type declarations live in `*.types.ts`; `*.enum.ts` holds a const object and
 // the union type derived from it (they must share a file to share a name).
@@ -32,17 +33,30 @@ const pureFunctionRules = {
   "functional/no-try-statements": "error",
 };
 
+// The core package stands alone: no React and no other framebudget package.
+const corePackagePatterns = [
+  { regex: String.raw`^react(-dom)?(/|$)`, message: "@framebudget/core must not depend on React." },
+  {
+    group: ["framebudget", "framebudget/**", "@framebudget/**"],
+    message: "@framebudget/core must not import the other packages.",
+  },
+];
+
 // Code that may reach the browser or a sibling layer only through its own folder.
+// Each rule repeats the core package patterns, since a later no-restricted-imports replaces an earlier one.
 const layer = (files, forbidden) => ({
   files,
   rules: {
     "no-restricted-imports": [
       "error",
       {
-        patterns: forbidden.map((name) => ({
-          group: [`**/${name}/**`],
-          message: `This layer must not import ${name}.`,
-        })),
+        patterns: [
+          ...corePackagePatterns,
+          ...forbidden.map((name) => ({
+            group: [`**/${name}/**`],
+            message: `This layer must not import ${name}.`,
+          })),
+        ],
       },
     ],
   },
@@ -74,14 +88,17 @@ const maxFilesPerFolder = {
 };
 
 export default defineConfig(
-  { ignores: ["dist/**", "node_modules/**", "src/boot/source.generated.ts", "docs/**", "assets/**", "worker/**"] },
+  { ignores: ["**/dist/**", "node_modules/**", `${CORE}/boot/source.generated.ts`] },
   js.configs.recommended,
   {
     files: TS_FILES,
     extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked, unicorn.configs.recommended],
     languageOptions: {
       parserOptions: {
-        projectService: { allowDefaultProject: ["*.config.ts"], defaultProject: "test/tsconfig.json" },
+        projectService: {
+          allowDefaultProject: ["*.config.ts", "packages/*/*.config.ts"],
+          defaultProject: "packages/core/test/tsconfig.json",
+        },
         tsconfigRootDir: import.meta.dirname,
       },
       globals: { ...globals.browser },
@@ -175,13 +192,48 @@ export default defineConfig(
     files: ["**/*.enum.ts"],
     rules: { "no-restricted-syntax": ["error", noEnums] },
   },
-  { files: ["src/core/**/*.ts"], rules: pureFunctionRules },
-  layer(["src/core/**/*.ts"], ["platform", "startup", "budget", "boot", "react", "panel", "governor"]),
-  layer(["src/benchmark/**/*.ts", "src/governor/**/*.ts"], ["platform", "startup", "budget", "boot", "react", "panel"]),
-  layer(["src/platform/**/*.ts"], ["startup", "budget", "boot", "react", "panel"]),
-  layer(["src/startup/**/*.ts"], ["budget", "boot", "react", "panel"]),
+  { files: [`${CORE}/core/**/*.ts`], rules: pureFunctionRules },
+  layer([`${CORE}/**/*.ts`], []),
+  layer([`${CORE}/core/**/*.ts`], ["platform", "startup", "budget", "boot", "panel", "governor"]),
+  layer([`${CORE}/benchmark/**/*.ts`, `${CORE}/governor/**/*.ts`], ["platform", "startup", "budget", "boot", "panel"]),
+  layer([`${CORE}/platform/**/*.ts`], ["startup", "budget", "boot", "panel"]),
+  layer([`${CORE}/startup/**/*.ts`], ["budget", "boot", "panel"]),
   {
-    files: ["test/**/*.ts"],
+    // React bindings use the core like any site does: through its public entries.
+    files: ["packages/react/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: String.raw`^@framebudget/core/(?!(boot|panel)$)`,
+              message: "Import @framebudget/core through its public entries.",
+            },
+            {
+              group: ["**/packages/**", "**/core/src/**", "framebudget", "framebudget/**"],
+              message: "Import @framebudget/core, not its files.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The framebudget package only re-exports the scoped packages, so the code exists once.
+    files: ["packages/framebudget/src/**/*.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Program > :not(ExportAllDeclaration, ExportNamedDeclaration[source])",
+          message: "The framebudget package holds `export ... from` statements only.",
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/*/test/**/*.ts"],
     rules: {
       // Test doubles stand in for browser objects, which need loose shapes.
       "@typescript-eslint/no-non-null-assertion": "off",
@@ -189,7 +241,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["*.config.ts", "eslint.config.js"],
+    files: ["*.config.ts", "packages/*/*.config.ts", "eslint.config.js"],
     rules: {
       "import-x/no-default-export": "off",
       "unicorn/no-top-level-side-effects": "off",
@@ -198,7 +250,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["scripts/**/*.mjs", "eslint.config.js"],
+    files: ["**/scripts/**/*.mjs", "eslint.config.js"],
     languageOptions: { globals: { ...globals.node } },
   },
   prettier,
