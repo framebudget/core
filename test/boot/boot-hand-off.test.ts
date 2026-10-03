@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { bootScript, createBootScript } from "../../src/boot/index";
 import { createBudget } from "../../src/budget/create-budget";
+import { calibrationKey } from "../../src/core/calibration/calibration-key";
+import { defaultCalibration } from "../../src/core/calibration/default-calibration";
+import { mergeCalibration } from "../../src/core/calibration/merge/merge-calibration";
 import { createFakeStorage } from "../support/fake-storage";
 import { cached, runBoot } from "./run-boot";
 
@@ -34,11 +37,14 @@ describe("boot script options, overrides and hand-off", () => {
   });
 
   it("inlines options, escaped so they cannot close the script tag", () => {
-    const source = createBootScript({
-      calibration: { effects: { confetti: { threshold: 10, cost: 1 } }, version: "</script><script>alert(1)" },
-    });
+    const calibration = { effects: { confetti: { threshold: 10, cost: 1 } }, version: "</script><script>alert(1)" };
+    const source = createBootScript({ calibration });
     expect(source).not.toContain("</script");
-    const { attributes } = runBoot(source, { localStorage: cached(50) });
+    // A cached score in the patched calibration's units, so the boot script does not
+    // run a real cold benchmark (a 1 ms clock in the sandbox makes that score noisy).
+    const local = cached(50, { key: calibrationKey(mergeCalibration(defaultCalibration, calibration)) });
+    const { attributes, window } = runBoot(source, { localStorage: local });
+    expect(window.__framebudget!.source).toBe("cached");
     expect(attributes["data-framebudget-effects"]!.split(" ")).toContain("confetti");
   });
 
