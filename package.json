@@ -87,11 +87,11 @@
   },
   "lint-staged": {
     "{src,test,scripts}/**/*.{ts,js,mjs}": [
-      "eslint --max-warnings=0 --fix",
+      "eslint --max-warnings=0 --no-warn-ignored --fix",
       "prettier --write"
     ],
     "{eslint.config.js,tsup.config.ts,vitest.config.ts}": [
-      "eslint --max-warnings=0 --fix",
+      "eslint --max-warnings=0 --no-warn-ignored --fix",
       "prettier --write"
     ],
     "{package.json,tsconfig.json,test/tsconfig.json}": [
