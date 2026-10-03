@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { createBootScript } from "framebudget/boot";
 import { calibration } from "./src/effects";
+import { llmsFiles } from "./src/llms";
 import { defaultsTable, dock, footer, highlightCode, ladder, nav, picker, registry, reserve, shareNote, simRows } from "./src/render";
 import { seoHead, type SeoPage } from "./src/seo";
 
@@ -80,7 +81,7 @@ function inlineCss(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [framebudgetPages(), inlineCss()],
+  plugins: [framebudgetPages(), inlineCss(), llmsFiles()],
   build: {
     target: "es2020",
     cssCodeSplit: false,
