@@ -286,11 +286,21 @@ The `CI` job sums them up: it fails when a part that ran failed, and passes when
 
 ### Releases
 
-Create a release by hand on GitHub with a new tag `vX.Y.Z` (or `vX.Y.Z-rc.N`), above the previous one. `.github/workflows/release.yml` then:
+Releases are immutable: once published, a release's tag and assets can never change. Cut one by pushing a new tag `vX.Y.Z` (or `vX.Y.Z-rc.N`), above the previous one, from an up-to-date `main`:
 
-1. checks the tag (format and order) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
-2. writes the notes from the commits since the previous tag, split into Library (`src/`, `README.md`, the build, runtime `package.json` fields) and Website (`docs/`, `worker/`), renders the release art (`assets/brand/build/release.html`) and puts both on the release;
-3. opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package version and the art in `docs/public/releases/`;
-4. publishes `@alysnnix/framebudget` to GitHub Packages when the library changed (`next` dist-tag for prereleases), and deploys the site and the worker to Cloudflare every time.
+```sh
+git switch main && git pull
+git tag v0.3.0 && git push origin v0.3.0
+```
+
+`.github/workflows/release.yml` then:
+
+1. checks the tag (format, order, no existing release) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
+2. writes the notes from the commits since the previous tag, split into Library (`src/`, `README.md`, the build, runtime `package.json` fields) and Website (`docs/`, `worker/`), renders the release art (`assets/brand/build/release.html`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package version and the art in `docs/public/releases/`;
+3. when the library changed: verifies the registry signatures of the dependencies, audits them, tests, builds and packs the tarball once (only `dist/`, `package.json` and `README.md`, no install scripts), then publishes that exact tarball to GitHub Packages as `@alysnnix/framebudget` (`next` dist-tag for prereleases);
+4. deploys the site and the worker to Cloudflare;
+5. creates a draft release with the notes, the art, the tarball and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
+
+Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`.
 
 Preview the notes with `npm run release:notes -- --tag v0.2.0 --dry-run` (HEAD stands in for a tag that does not exist yet), and the art with `npm run release:art -- --version 0.2.0 --date 2026-10-03 --notes notes.json --out art.png` (headless Chrome, `CHROME_PATH` to override).
