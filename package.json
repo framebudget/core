@@ -3,12 +3,14 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "site"
+    "site",
+    "worker"
   ],
   "scripts": {
     "build": "npm run build -w framebudget",
-    "test": "npm run test -w framebudget",
-    "typecheck": "npm run typecheck -w framebudget",
-    "size": "npm run size -w framebudget"
+    "test": "npm run test -w framebudget && npm run test -w framebudget-worker",
+    "typecheck": "npm run typecheck -w framebudget && npm run typecheck -w framebudget-worker",
+    "size": "npm run size -w framebudget",
+    "deploy": "npm run build -w framebudget && npm run build -w framebudget-site && npm run deploy -w framebudget-worker"
   }
 }

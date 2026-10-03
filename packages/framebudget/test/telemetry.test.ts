@@ -53,6 +53,17 @@ describe("telemetry", () => {
     expect(browser.beacons).toEqual([]);
   });
 
+  it("sends nothing once the site turns sharing off with share: null, even after it was armed", async () => {
+    const { browser, b } = await loadedPage({}, SHARE);
+    b.configure({ share: null });
+    browser.fire("pagehide");
+    expect(browser.beacons).toEqual([]);
+
+    b.configure({ share: SHARE });
+    browser.fire("pagehide");
+    expect(browser.beacons).toHaveLength(1);
+  });
+
   it("sends nothing from page views outside the sample or with a forced tier", async () => {
     const outside = await loadedPage({}, { ...SHARE, sampleRate: 0.1 }, () => 0.5);
     outside.browser.fire("pagehide");
