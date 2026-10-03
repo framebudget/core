@@ -1,6 +1,6 @@
 {
   "name": "framebudget",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Decides, per device, which visual effects a site can afford. Keep the effects. Lose the stutter.",
   "license": "MIT",
   "type": "module",

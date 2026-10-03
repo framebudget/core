@@ -2,6 +2,16 @@
 
 Every release of framebudget, newest first, split by what shipped: the library (the npm package) and the website (framebudget.dev).
 
+## [0.2.1] - 2026-10-03
+
+### Library
+
+No changes.
+
+### Website
+
+No changes.
+
 ## [0.2.0] - 2026-10-03
 
 ### Library
