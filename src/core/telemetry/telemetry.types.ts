@@ -9,6 +9,12 @@ export interface ShareOptions {
   endpoint: string;
   /** Fraction of page views that report, 0 to 1. Default 0.1. */
   sampleRate?: number;
+  /**
+   * Days a browser waits after a report before it reports again, so frequent
+   * visitors do not outweigh the rest. A new calibration version reports at once.
+   * Kept in localStorage; no identifier leaves the device. Default 7, 0 turns it off.
+   */
+  minIntervalDays?: number;
   /** JSON calibration patch fetched after load and used from the next visit. */
   calibrationUrl?: string;
 }

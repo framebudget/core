@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadedPage, SHARE } from "./loaded-page";
+import { loadedPage, SHARE } from "../loaded-page";
 
 describe("telemetry opt-out", () => {
   it("sends nothing once the site turns sharing off with share: null, even after it was armed", async () => {

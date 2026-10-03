@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { StoredState } from "../../src/core/state/stored-state.types";
-import { STORAGE_KEY } from "../../src/platform/storage/storage.constants";
-import { createFakeStorage } from "../support/fake-storage";
-import { loadedPage, SHARE } from "./loaded-page";
+import type { StoredState } from "../../../src/core/state/stored-state.types";
+import { STORAGE_KEY } from "../../../src/platform/storage/storage.constants";
+import { createFakeStorage } from "../../support/fake-storage";
+import { loadedPage, SHARE } from "../loaded-page";
 
 const remote = { version: "remote-2", effects: { parallax: { threshold: 999 } } };
 

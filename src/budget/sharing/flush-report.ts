@@ -2,8 +2,18 @@ import { buildReport } from "../../core/telemetry/build-report";
 import { isSharingAllowed } from "../../core/telemetry/is-sharing-allowed";
 import { readHints } from "../../platform/hints/read-hints";
 import { sendReport } from "../../platform/telemetry/send-report";
+import type { StartContext } from "../../startup/startup.types";
 import type { BudgetState } from "../budget-state.types";
 import { currentFps } from "../decision/current-fps";
+import { persistState } from "../decision/persist-state";
+
+/** Records the beacon outcome; a queued report starts the interval, kept with its calibration for later visits. */
+function recordReport(state: BudgetState, context: StartContext, wasQueued: boolean): void {
+  state.wasReported = wasQueued;
+  if (!wasQueued) return;
+  context.stored = { ...context.stored, reportedAt: Date.now(), reportedCal: context.calibration.version };
+  persistState(state);
+}
 
 /** Sends the one report of this page view, unless it was sent, sharing is off, or the device is not real. */
 export function flushReport(state: BudgetState): void {
@@ -24,5 +34,5 @@ export function flushReport(state: BudgetState): void {
     stepped: state.stepped,
     fps: currentFps(state),
   });
-  state.wasReported = sendReport(scope, share, report);
+  recordReport(state, context, sendReport(scope, share, report));
 }

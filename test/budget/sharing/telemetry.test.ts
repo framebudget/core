@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { TelemetryReport } from "../../src/core/telemetry/telemetry.types";
-import { sorted } from "../support/sorted";
-import { loadedPage, SHARE } from "./loaded-page";
+import type { TelemetryReport } from "../../../src/core/telemetry/telemetry.types";
+import { sorted } from "../../support/sorted";
+import { loadedPage, SHARE } from "../loaded-page";
 
 describe("telemetry", () => {
   it("sends one anonymous report when the page is hidden, only if the site opted in", async () => {

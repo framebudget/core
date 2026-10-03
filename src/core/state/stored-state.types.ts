@@ -23,4 +23,7 @@ export interface StoredState {
   /** Calibration fetched from the site's calibration URL, used from the next visit. */
   remote?: CalibrationPatch;
   remoteAt?: number;
+  /** Date.now() of the last report this browser sent, and its calibration version (telemetry throttle). */
+  reportedAt?: number;
+  reportedCal?: string;
 }
