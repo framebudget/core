@@ -1,5 +1,7 @@
 # framebudget
 
+![video](./assets/brand/og.png)
+
 Keep the effects. Lose the stutter.
 
 At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page transitions, canvas animations, sounds, blur) spends part of it. framebudget measures how much budget a device really has and allows only the effects that fit, so slow phones never stutter and fast phones keep everything.
