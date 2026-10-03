@@ -26,9 +26,8 @@
     {
       "binding": "DB",
       "database_name": "framebudget",
-      // PLACEHOLDER: replace with the id printed by `npx wrangler d1 create framebudget`
-      // before the first remote migration or deploy. Local dev (--local) works with this value.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // created with `npx wrangler d1 create framebudget` in the owner's account
+      "database_id": "bf26d7c7-9344-47cd-87d8-68584efde78a",
       "migrations_dir": "migrations"
     }
   ],

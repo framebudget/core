@@ -146,12 +146,12 @@ The cron trigger (`17 3 * * *`, daily) runs `DELETE FROM reports WHERE created_d
 - D1 free plan: 5 GB storage, 100,000 rows written and 5 million rows read per day. A row is about 400 bytes, and the site reports every page view (`sampleRate: 1`), so 400 days of retention fit in 5 GB up to about 30,000 page views a day (12 million rows). Past the daily write limit, inserts fail and the Worker answers 503 until the next day; nothing is billed.
 - No rate limiting binding is configured. The Workers Rate Limiting API page does not state whether the binding is available on the free plan, so it is left out rather than risk a failed deploy. If added later, key it by a constant or by route, never by IP.
 
-## One-time deploy (coordinator)
+## Deploy
+
+The D1 database `framebudget` already exists in the owner's account and its id is in `worker/wrangler.jsonc`.
 
 ```sh
-npx wrangler d1 create framebudget
-# Put the printed database_id into worker/wrangler.jsonc (replacing the zero placeholder).
-cd worker && npx wrangler d1 migrations apply framebudget --remote && cd ..
+cd worker && npx wrangler d1 migrations apply framebudget --remote && cd ..   # only when migrations/ changed
 npm run deploy    # builds the library and site, then wrangler deploy
 ```
 
