@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createBudget } from "../src/budget";
 import { STORAGE_KEY } from "../src/storage";
 import type { ShareOptions } from "../src/telemetry";
@@ -72,6 +72,67 @@ describe("telemetry", () => {
     const forced = await loadedPage({ search: "?framebudget-tier=Full" }, SHARE);
     forced.browser.fire("pagehide");
     expect(forced.browser.beacons).toEqual([]);
+  });
+});
+
+describe("one report per browser per interval", () => {
+  const DAY = 86400000;
+  afterEach(() => vi.useRealTimers());
+
+  /** A visit on day `day`, sharing the same localStorage across visits. */
+  async function visit(local: FakeStorage, day: number, share: ShareOptions = SHARE) {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(Date.UTC(2026, 9, 1) + day * DAY));
+    const { browser } = await loadedPage({ local }, share);
+    browser.fire("pagehide");
+    vi.useRealTimers();
+    return browser.beacons.length;
+  }
+
+  it("reports on the first visit, waits out the interval, then reports again", async () => {
+    const local = new FakeStorage();
+    expect(await visit(local, 0)).toBe(1);
+    expect(await visit(local, 1)).toBe(0);
+    expect(await visit(local, 6)).toBe(0);
+    expect(await visit(local, 7)).toBe(1);
+    expect(await visit(local, 8)).toBe(0);
+  });
+
+  it("honors a custom interval, and 0 reports every visit", async () => {
+    const local = new FakeStorage();
+    const daily = { ...SHARE, minIntervalDays: 1 };
+    expect(await visit(local, 0, daily)).toBe(1);
+    expect(await visit(local, 1, daily)).toBe(1);
+
+    const always = new FakeStorage();
+    const every = { ...SHARE, minIntervalDays: 0 };
+    expect(await visit(always, 0, every)).toBe(1);
+    expect(await visit(always, 0, every)).toBe(1);
+  });
+
+  it("reports again at once when the calibration version changes", async () => {
+    const local = new FakeStorage();
+    expect(await visit(local, 0)).toBe(1);
+    const state = JSON.parse(local.getItem(STORAGE_KEY)!);
+    local.setItem(STORAGE_KEY, JSON.stringify({ ...state, reportedCal: "an-older-calibration" }));
+    expect(await visit(local, 1)).toBe(1);
+  });
+
+  it("does not start the interval when nothing was sent", async () => {
+    const local = new FakeStorage();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(Date.UTC(2026, 9, 1)));
+    const { browser } = await loadedPage({ local, gpc: true }, SHARE);
+    browser.fire("pagehide");
+    vi.useRealTimers();
+    expect(browser.beacons).toEqual([]);
+    expect(await visit(local, 0)).toBe(1);
+  });
+
+  it("treats a clock set back before the last report as due", async () => {
+    const local = new FakeStorage();
+    expect(await visit(local, 10)).toBe(1);
+    expect(await visit(local, 2)).toBe(1);
   });
 });
 

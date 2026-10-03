@@ -213,6 +213,7 @@ configure({
   share: {
     endpoint: "https://example.com/framebudget", // receives the report
     sampleRate: 0.1,                              // share of page views that report (default 0.1)
+    minIntervalDays: 7,                           // days a browser waits before reporting again (default 7)
     calibrationUrl: "https://example.com/framebudget/calibration.json", // optional
   },
 });
@@ -221,6 +222,7 @@ configure({
 - **What is sent.** The report contains the calibration version, the cold, warm and effective scores, the kernel rates, the clock resolution, hardware hints (cores, memory, pressure), the reduced-motion preference, the tier, the allowed effects, the effects stepped down, and the median fps per reported source. Numbers are rounded.
 - **What is not sent.** No identifiers, cookies, URL, user agent or timestamps. Only sampled page views report.
 - **When.** One `navigator.sendBeacon` call when the page is hidden, after load.
+- **How often.** At most one report per browser every `minIntervalDays` days (default 7), so frequent visitors do not outweigh the rest. A new calibration version reports at once. The date of the last report is kept in the same `localStorage` entry as local learning; no identifier leaves the device. Browsers without storage cannot be throttled and report on every sampled page view.
 - **Never with Global Privacy Control or Save-Data.** Nothing is sent when `navigator.globalPrivacyControl` or Save-Data is on, checked again at send time. Nothing is sent while a tier is forced or a device is simulated.
 - **Letting visitors say no.** `configure({ share: null })` turns sharing off at any time, also after load: a report already armed for this page is not sent. Keep the visitor's choice yourself (for example in `localStorage`) and pass `share: null` on later visits.
 - **The browser still sends.** The beacon request carries what every request carries (the IP address and the `Origin` header). Handle it on your server accordingly.

@@ -12,6 +12,12 @@ export interface ShareOptions {
   endpoint: string;
   /** Fraction of page views that report, 0 to 1. Default 0.1. */
   sampleRate?: number;
+  /**
+   * Days a browser waits after a report before it reports again, so frequent
+   * visitors do not outweigh the rest. A new calibration version reports at once.
+   * Kept in localStorage; no identifier leaves the device. Default 7, 0 turns it off.
+   */
+  minIntervalDays?: number;
   /** JSON calibration patch fetched after load and used from the next visit. */
   calibrationUrl?: string;
 }
@@ -84,6 +90,16 @@ export function buildReport(input: ReportInput): TelemetryReport {
     stepped: input.stepped.slice(),
     fps,
   };
+}
+
+const DEFAULT_INTERVAL_DAYS = 7;
+
+/** Whether this browser may report again: never reported, a new calibration, or the interval has passed. */
+export function reportDue(share: ShareOptions, state: StoredState, calVersion: string, nowMs: number): boolean {
+  const days = typeof share.minIntervalDays === "number" && share.minIntervalDays >= 0 ? share.minIntervalDays : DEFAULT_INTERVAL_DAYS;
+  if (state.reportedAt === undefined || state.reportedCal !== calVersion) return true;
+  // a clock set back past the last report counts as due, so a broken clock never silences a device for good
+  return nowMs - state.reportedAt >= days * 86400000 || nowMs < state.reportedAt;
 }
 
 /** Sends the report with sendBeacon. Returns whether the browser queued it. */

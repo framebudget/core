@@ -23,7 +23,7 @@ import {
   type StartContext,
 } from "./start";
 import { saveState } from "./storage";
-import { buildReport, refreshCalibration, sendReport, sharingAllowed, type ShareOptions } from "./telemetry";
+import { buildReport, refreshCalibration, reportDue, sendReport, sharingAllowed, type ShareOptions } from "./telemetry";
 import { Tier } from "./tiers";
 
 export interface ConfigureOptions {
@@ -257,6 +257,11 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
         fps: governor ? governor.fps() : {},
       }),
     );
+    if (reported) {
+      ctx.stored.reportedAt = Date.now();
+      ctx.stored.reportedCal = ctx.cal.version;
+      saveState(ctx.storage, ctx.stored);
+    }
   }
 
   function startSharing(): void {
@@ -266,6 +271,7 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
     if (share.calibrationUrl) refreshCalibration(scope, share.calibrationUrl, ctx.stored, ctx.storage, Date.now());
     if (sharingArmed) return;
     sharingArmed = true;
+    if (!reportDue(share, ctx.stored, ctx.cal.version, Date.now())) return;
     const rate = typeof share.sampleRate === "number" ? share.sampleRate : 0.1;
     if (!((init.random || Math.random)() < rate)) return;
     const s = scope;

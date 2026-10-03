@@ -26,6 +26,9 @@ export interface StoredState {
   /** Calibration fetched from the site's calibration URL, used from the next visit. */
   remote?: CalibrationPatch;
   remoteAt?: number;
+  /** Date.now() of the last report this browser sent, and its calibration version (telemetry throttle). */
+  reportedAt?: number;
+  reportedCal?: string;
 }
 
 /** A storage area, or null when it is missing or access throws (privacy modes, sandboxed frames). */
@@ -55,6 +58,8 @@ export function loadState(storage: Storage | null): StoredState {
   }
   if (parsed.remote && typeof parsed.remote === "object") state.remote = parsed.remote;
   state.remoteAt = num(parsed.remoteAt);
+  state.reportedAt = num(parsed.reportedAt);
+  if (typeof parsed.reportedCal === "string") state.reportedCal = parsed.reportedCal;
   return state;
 }
 
