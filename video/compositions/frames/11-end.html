@@ -1,0 +1,96 @@
+<template id="f11-end-template">
+  <div id="root" data-composition-id="11-end" data-start="0" data-duration="5" data-width="1920" data-height="1080">
+    <style>
+      @font-face{font-family:"Archivo";font-weight:400 800;font-stretch:100% 125%;font-style:normal;font-display:block;src:url("assets/fonts/archivo-var.woff2") format("woff2");}
+      @font-face{font-family:"Martian Mono";font-weight:400 700;font-style:normal;font-display:block;src:url("assets/fonts/martian-mono-var.woff2") format("woff2");}
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+      }
+      #f11-end-ground {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 60% at 50% -10%, #1A1F3D 0%, rgba(26,31,61,0) 60%), #0F1225;
+      }
+      #f11-end-stage {
+        position: absolute;
+        left: 0;
+        top: 282px;
+        width: 1920px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #f11-end-lockup {
+        display: block;
+        width: 880px;
+        height: 122.3px;
+      }
+      #f11-end-tagline {
+        margin: 56px 0 0 0;
+        font-family: "Archivo", sans-serif;
+        font-size: 75px;
+        font-weight: 760;
+        font-stretch: 114%;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        color: #E8EBF2;
+        white-space: nowrap;
+        text-align: center;
+      }
+      #f11-end-pill {
+        margin-top: 48px;
+        display: inline-flex;
+        align-items: center;
+        height: 76px;
+        padding: 0 36px;
+        background: #0B0E1E;
+        border: 1px solid #2A3052;
+        border-radius: 6px;
+        font-family: "Martian Mono", monospace;
+        font-size: 31px;
+        font-weight: 400;
+        line-height: 1;
+        color: #E8EBF2;
+        white-space: nowrap;
+      }
+    </style>
+
+    <div id="f11-end-ground" class="clip" data-start="0" data-duration="5" data-track-index="0"></div>
+
+    <div id="f11-end-stage">
+      <img id="f11-end-lockup" src="assets/lockup-dark.svg" alt="framebudget" width="880" height="122">
+      <div id="f11-end-tagline">Keep the effects. Lose the stutter.</div>
+      <div id="f11-end-pill">npm i framebudget</div>
+    </div>
+
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var q = function (id) { return document.querySelector('[id="' + id + '"]'); };
+        var lockup = q("f11-end-lockup");
+        var tagline = q("f11-end-tagline");
+        var pill = q("f11-end-pill");
+        var stage = q("f11-end-stage");
+
+        var tl = gsap.timeline({ paused: true });
+
+        // Scene 1 (0.0-1.2s): lockup rises a few pixels and fades in.
+        tl.fromTo(lockup, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" }, 0);
+
+        // Scene 2 (1.2-2.4s): tagline slides up and fades in, then the install pill fades in.
+        tl.fromTo(tagline, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 1.2);
+        tl.fromTo(pill, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 1.8);
+
+        // Scene 3 (2.4-5.0s): still hold, then the only exit of the film: fade to the ground.
+        tl.fromTo(stage, { opacity: 1 }, { opacity: 0, duration: 0.5, ease: "sine.inOut" }, 4.5);
+
+        window.__timelines["11-end"] = tl;
+      })();
+    </script>
+  </div>
+</template>

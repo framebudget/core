@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>framebudget identity explorations</title>
+<meta name="description" content="Three identity directions for framebudget, side by side.">
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="preload" href="fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="assets/components.css">
+<style>
+  @font-face {
+    font-family: "Sixtyfour";
+    src: url("fonts/sixtyfour-var.woff2") format("woff2");
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Unbounded";
+    src: url("fonts/unbounded-var.woff2") format("woff2");
+    font-weight: 200 900;
+    font-display: swap;
+  }
+
+  .page {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-5) var(--space-9);
+  }
+
+  .intro {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 46rem;
+    margin-bottom: var(--space-7);
+  }
+
+  .intro h1 {
+    font-size: clamp(var(--text-2xl), 4vw, var(--text-3xl));
+    line-height: var(--leading-tight);
+  }
+
+  .intro p {
+    color: var(--color-muted);
+    font-size: var(--text-md);
+  }
+
+  .boards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  .board {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+  }
+
+  .board--chosen {
+    border-color: var(--color-text);
+    box-shadow: 0 0 0 1px var(--color-text);
+  }
+
+  .board__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .board__head h2 {
+    font-size: var(--text-xl);
+  }
+
+  .chosen {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 2px var(--space-3);
+    border-radius: var(--radius-control);
+    background: var(--color-text);
+    color: var(--color-bg);
+    font-size: var(--text-sm);
+    font-weight: 640;
+  }
+
+  .stage {
+    display: grid;
+    place-items: center;
+    gap: var(--space-6);
+    aspect-ratio: 4 / 3;
+    padding: var(--space-6) var(--space-4);
+    border-radius: var(--radius-control);
+  }
+
+  .stage__mark {
+    width: 112px;
+    height: 112px;
+  }
+
+  .stage__lockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .stage__lockup svg {
+    width: 36px;
+    height: 36px;
+    flex: none;
+  }
+
+  .rationale {
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+  }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .swatches li {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    min-width: 0;
+  }
+
+  .swatches i {
+    display: block;
+    height: 40px;
+    border-radius: var(--radius-segment);
+    box-shadow: inset 0 0 0 1px rgb(232 235 242 / 0.14);
+  }
+
+  .swatches b {
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--text-xs);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .facts {
+    display: grid;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .facts dt {
+    color: var(--color-muted);
+    font-weight: 560;
+  }
+
+  .facts dd {
+    margin-top: 2px;
+  }
+
+  .sample {
+    border-radius: var(--radius-control);
+    padding: var(--space-4);
+    min-height: 132px;
+    display: grid;
+    align-content: center;
+    gap: var(--space-2);
+  }
+
+  .note {
+    padding-left: var(--space-4);
+    border-left: 2px solid var(--color-border-strong);
+  }
+
+  /* Deadline */
+  .d-deadline .stage {
+    background: var(--fb-grid);
+  }
+
+  .d-deadline .wordmark {
+    font-family: var(--font-sans);
+    font-weight: 680;
+    font-stretch: 108%;
+    font-size: 34px;
+    letter-spacing: -0.012em;
+    color: var(--fb-ink);
+    line-height: 1;
+  }
+
+  .d-deadline .sample {
+    background: var(--fb-grid);
+    color: var(--color-text);
+    padding: var(--space-3);
+  }
+
+  .d-deadline .meter {
+    padding: var(--space-3);
+  }
+
+  /* Phosphor */
+  .d-phosphor .stage,
+  .d-phosphor .sample {
+    background: #0f2b2a;
+  }
+
+  .d-phosphor .wordmark {
+    font-family: "Sixtyfour", var(--font-mono);
+    font-variation-settings: "SCAN" 30, "BLED" 10;
+    font-size: 19px;
+    color: #ffb000;
+    line-height: 1;
+    text-shadow: 0 0 8px rgb(255 176 0 / 0.45);
+  }
+
+  .d-phosphor .sample p {
+    color: #e6ede4;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  /* Sixty */
+  .d-sixty .stage {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+
+  .d-sixty .wordmark {
+    font-family: "Unbounded", var(--font-sans);
+    font-weight: 600;
+    font-size: 25px;
+    letter-spacing: -0.02em;
+    color: #2340e0;
+    line-height: 1;
+  }
+
+  .d-sixty .sample {
+    background: #e3e8fa;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .d-sixty .sample p {
+    color: #0e1440;
+    font-family: "Unbounded", var(--font-sans);
+    font-weight: 500;
+    font-size: var(--text-sm);
+    line-height: 1.35;
+  }
+
+  .decision {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: var(--space-6);
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .decision h2 {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-tight);
+  }
+
+  .decision__body {
+    display: grid;
+    gap: var(--space-4);
+    max-width: var(--measure);
+    font-size: var(--text-md);
+  }
+
+  .decision__body .button {
+    justify-self: start;
+  }
+
+  @media (max-width: 1100px) {
+    .boards {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 34rem;
+    }
+
+    .decision {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 420px) {
+    .page {
+      padding-inline: var(--space-4);
+    }
+
+    .d-deadline .wordmark {
+      font-size: 28px;
+    }
+
+    .d-phosphor .wordmark {
+      font-size: 15px;
+    }
+
+    .d-sixty .wordmark {
+      font-size: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="intro">
+    <img src="logo/lockup-dark.svg" alt="framebudget" width="164" height="24" style="width:164px;height:auto">
+    <h1>Three ways to draw a 16.7 ms frame</h1>
+    <p>Each direction starts from the same fact: at 60 Hz a frame has 16.7 ms, and every effect spends part of it. They differ in which picture of that fact they make memorable.</p>
+    <p class="note">Deadline was chosen, and it now ships dark first: Night is the default page and the light theme remains only as tokens for documentation. The boards below show the directions as they were first explored. The <a href="index.html">brand guide</a> has the final dark palette.</p>
+  </header>
+
+  <div class="boards">
+    <!-- A. Deadline -->
+    <article class="board board--chosen d-deadline" aria-labelledby="dir-deadline">
+      <div class="board__head">
+        <h2 id="dir-deadline">Deadline</h2>
+        <span class="chosen">Chosen</span>
+      </div>
+      <div class="stage">
+        <svg class="stage__mark" viewBox="0 0 32 32" role="img" aria-label="Deadline mark"><rect width="32" height="32" rx="8" fill="#161A2E"/><rect x="4" y="5" width="9" height="6" rx="1" fill="#F2B21B"/><rect x="13" y="13" width="6" height="6" rx="1" fill="#9474F2"/><rect x="19" y="21" width="4" height="6" rx="1" fill="#2FB67C"/><rect x="25" y="3" width="2.5" height="26" rx="1.25" fill="#FF5A92"/></svg>
+        <div class="stage__lockup">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#161A2E"/><rect x="4" y="5" width="9" height="6" rx="1" fill="#F2B21B"/><rect x="13" y="13" width="6" height="6" rx="1" fill="#9474F2"/><rect x="19" y="21" width="4" height="6" rx="1" fill="#2FB67C"/><rect x="25" y="3" width="2.5" height="26" rx="1.25" fill="#FF5A92"/></svg>
+          <span class="wordmark">framebudget</span>
+        </div>
+      </div>
+      <p class="rationale">Work runs down the frame like a profiler flame chart and stops before the vsync line. The mark is the library's mental model, drawn.</p>
+      <ul class="swatches" aria-label="Deadline palette">
+        <li><i style="background:#161A2E"></i><b>Ink</b>#161A2E</li>
+        <li><i style="background:#EEF1F5"></i><b>Grid</b>#EEF1F5</li>
+        <li><i style="background:#D1185E"></i><b>Vsync</b>#D1185E</li>
+        <li><i style="background:#F2B21B"></i><b>Amber</b>#F2B21B</li>
+        <li><i style="background:#9474F2"></i><b>Violet</b>#9474F2</li>
+      </ul>
+      <div class="sample" data-theme="light" role="group" aria-label="Deadline applied to a budget meter">
+        <div class="meter">
+          <div class="meter__head"><span class="meter__title">Reference phone</span><span class="meter__total"><strong>12.7</strong> of 16.7 ms</span></div>
+          <div class="meter__track" aria-hidden="true">
+            <span class="meter__seg seg-app" style="--ms:4"></span><span class="meter__seg seg-transition" style="--ms:2.4"></span><span class="meter__seg seg-parallax" style="--ms:1.8"></span><span class="meter__seg seg-canvas" style="--ms:3.6"></span><span class="meter__seg seg-sound" style="--ms:0.9"></span>
+            <span class="meter__deadline"></span>
+          </div>
+        </div>
+      </div>
+      <dl class="facts">
+        <div><dt>Type</dt><dd>Archivo, semi-expanded for display. Martian Mono for code and readouts.</dd></div>
+        <div><dt>Strength</dt><dd>Reads at 16 px, and every component (meters, tier chips, charts) grows straight out of the mark.</dd></div>
+        <div><dt>Risk</dt><dd>Leans on three hues. The single-color version has to carry it by shape, and the staircase does.</dd></div>
+      </dl>
+    </article>
+
+    <!-- B. Phosphor -->
+    <article class="board d-phosphor" aria-labelledby="dir-phosphor">
+      <div class="board__head">
+        <h2 id="dir-phosphor">Phosphor</h2>
+      </div>
+      <div class="stage">
+        <svg class="stage__mark" viewBox="0 0 32 32" role="img" aria-label="Phosphor mark"><rect width="32" height="32" rx="6" fill="#0A1F1E"/><path d="M8 4V28M16 4V28M24 4V28M4 16H28" stroke="#2E5752" stroke-width=".6"/><path d="M26 4V28" stroke="#FFD877" stroke-width="1" stroke-dasharray="1.5 1.5"/><path d="M3 21H6V9H10V21H12V12H15V21H17V15H19V21H29" fill="none" stroke="#FFB000" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        <div class="stage__lockup">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#0A1F1E"/><path d="M8 4V28M16 4V28M24 4V28M4 16H28" stroke="#2E5752" stroke-width=".6"/><path d="M26 4V28" stroke="#FFD877" stroke-width="1" stroke-dasharray="1.5 1.5"/><path d="M3 21H6V9H10V21H12V12H15V21H17V15H19V21H29" fill="none" stroke="#FFB000" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+          <span class="wordmark">framebudget</span>
+        </div>
+      </div>
+      <p class="rationale">framebudget as a measuring instrument: a scope trace where each pulse is an effect and the flat line after them is headroom.</p>
+      <ul class="swatches" aria-label="Phosphor palette">
+        <li><i style="background:#0F2B2A"></i><b>Tube</b>#0F2B2A</li>
+        <li><i style="background:#FFB000"></i><b>Phosphor</b>#FFB000</li>
+        <li><i style="background:#FFD877"></i><b>Glow</b>#FFD877</li>
+        <li><i style="background:#2E5752"></i><b>Graticule</b>#2E5752</li>
+        <li><i style="background:#E6EDE4"></i><b>Bone</b>#E6EDE4</li>
+      </ul>
+      <div class="sample" role="group" aria-label="Phosphor applied to a frame time trace">
+        <svg viewBox="0 0 300 70" aria-hidden="true"><path d="M0 35H300M60 0V70M120 0V70M180 0V70M240 0V70" stroke="#2E5752" stroke-width="1"/><path d="M0 22H300" stroke="#FFD877" stroke-dasharray="4 4"/><path d="M0 52L20 50L40 53L60 49L80 51L100 46L120 50L140 30L160 18L180 44L200 50L220 49L240 52L260 50L280 51L300 50" fill="none" stroke="#FFB000" stroke-width="2" stroke-linejoin="round"/></svg>
+        <p>frame time, 16.7 ms line dashed. The spike is a stutter the governor caught.</p>
+      </div>
+      <dl class="facts">
+        <div><dt>Type</dt><dd>Sixtyfour, a CRT face with a scanline axis, over Martian Mono.</dd></div>
+        <div><dt>Strength</dt><dd>Memorable and honest about measuring before deciding.</dd></div>
+        <div><dt>Risk</dt><dd>Pulls toward retro nostalgia, and amber on dark leaves little room for a light documentation theme.</dd></div>
+      </dl>
+    </article>
+
+    <!-- C. Sixty -->
+    <article class="board d-sixty" aria-labelledby="dir-sixty">
+      <div class="board__head">
+        <h2 id="dir-sixty">Sixty</h2>
+      </div>
+      <div class="stage">
+        <svg class="stage__mark" viewBox="0 0 32 32" role="img" aria-label="Sixty mark"><path d="M16.00 6.50L16.00 2.50M16.99 6.55L17.41 2.57M17.98 6.71L18.81 2.80M18.94 6.96L20.17 3.16M19.86 7.32L21.49 3.67M20.75 7.77L22.75 4.31M21.58 8.31L23.94 5.08M22.36 8.94L25.03 5.97M23.06 9.64L26.03 6.97M23.69 10.42L26.92 8.06M24.23 11.25L27.69 9.25M24.68 12.14L28.33 10.51M25.04 13.06L28.84 11.83M25.29 14.02L29.20 13.19M25.45 15.01L29.43 14.59M25.50 16.00L29.50 16.00M25.45 16.99L29.43 17.41M25.29 17.98L29.20 18.81M25.04 18.94L28.84 20.17M24.68 19.86L28.33 21.49M24.23 20.75L27.69 22.75M23.69 21.58L26.92 23.94M23.06 22.36L26.03 25.03M22.36 23.06L25.03 26.03M21.58 23.69L23.94 26.92M20.75 24.23L22.75 27.69M19.86 24.68L21.49 28.33M18.94 25.04L20.17 28.84M17.98 25.29L18.81 29.20M16.99 25.45L17.41 29.43M16.00 25.50L16.00 29.50M15.01 25.45L14.59 29.43M14.02 25.29L13.19 29.20M13.06 25.04L11.83 28.84M12.14 24.68L10.51 28.33M11.25 24.23L9.25 27.69M10.42 23.69L8.06 26.92M9.64 23.06L6.97 26.03M8.94 22.36L5.97 25.03M8.31 21.58L5.08 23.94M7.77 20.75L4.31 22.75M7.32 19.86L3.67 21.49M6.96 18.94L3.16 20.17M6.71 17.98L2.80 18.81M6.55 16.99L2.57 17.41M6.50 16.00L2.50 16.00M6.55 15.01L2.57 14.59M6.71 14.02L2.80 13.19" stroke="#2340E0" stroke-width="1.1" stroke-linecap="round"/><path d="M5.06 12.45L3.16 11.83M5.49 11.32L3.67 10.51M6.04 10.25L4.31 9.25M6.70 9.24L5.08 8.06M7.45 8.30L5.97 6.97M8.30 7.45L6.97 5.97M9.24 6.70L8.06 5.08M10.25 6.04L9.25 4.31M11.32 5.49L10.51 3.67M12.45 5.06L11.83 3.16M13.61 4.75L13.19 2.80M14.80 4.56L14.59 2.57" stroke="#FF6B2C" stroke-width="1.1" stroke-linecap="round"/><circle cx="16" cy="16" r="4" fill="#2340E0"/></svg>
+        <div class="stage__lockup">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16.00 6.50L16.00 2.50M16.99 6.55L17.41 2.57M17.98 6.71L18.81 2.80M18.94 6.96L20.17 3.16M19.86 7.32L21.49 3.67M20.75 7.77L22.75 4.31M21.58 8.31L23.94 5.08M22.36 8.94L25.03 5.97M23.06 9.64L26.03 6.97M23.69 10.42L26.92 8.06M24.23 11.25L27.69 9.25M24.68 12.14L28.33 10.51M25.04 13.06L28.84 11.83M25.29 14.02L29.20 13.19M25.45 15.01L29.43 14.59M25.50 16.00L29.50 16.00M25.45 16.99L29.43 17.41M25.29 17.98L29.20 18.81M25.04 18.94L28.84 20.17M24.68 19.86L28.33 21.49M24.23 20.75L27.69 22.75M23.69 21.58L26.92 23.94M23.06 22.36L26.03 25.03M22.36 23.06L25.03 26.03M21.58 23.69L23.94 26.92M20.75 24.23L22.75 27.69M19.86 24.68L21.49 28.33M18.94 25.04L20.17 28.84M17.98 25.29L18.81 29.20M16.99 25.45L17.41 29.43M16.00 25.50L16.00 29.50M15.01 25.45L14.59 29.43M14.02 25.29L13.19 29.20M13.06 25.04L11.83 28.84M12.14 24.68L10.51 28.33M11.25 24.23L9.25 27.69M10.42 23.69L8.06 26.92M9.64 23.06L6.97 26.03M8.94 22.36L5.97 25.03M8.31 21.58L5.08 23.94M7.77 20.75L4.31 22.75M7.32 19.86L3.67 21.49M6.96 18.94L3.16 20.17M6.71 17.98L2.80 18.81M6.55 16.99L2.57 17.41M6.50 16.00L2.50 16.00M6.55 15.01L2.57 14.59M6.71 14.02L2.80 13.19" stroke="#2340E0" stroke-width="1.1" stroke-linecap="round"/><path d="M5.06 12.45L3.16 11.83M5.49 11.32L3.67 10.51M6.04 10.25L4.31 9.25M6.70 9.24L5.08 8.06M7.45 8.30L5.97 6.97M8.30 7.45L6.97 5.97M9.24 6.70L8.06 5.08M10.25 6.04L9.25 4.31M11.32 5.49L10.51 3.67M12.45 5.06L11.83 3.16M13.61 4.75L13.19 2.80M14.80 4.56L14.59 2.57" stroke="#FF6B2C" stroke-width="1.1" stroke-linecap="round"/><circle cx="16" cy="16" r="4" fill="#2340E0"/></svg>
+          <span class="wordmark">framebudget</span>
+        </div>
+      </div>
+      <p class="rationale">One second is sixty frames. The dial counts them, and the short orange ticks are the frames a slow device would drop.</p>
+      <ul class="swatches" aria-label="Sixty palette">
+        <li><i style="background:#2340E0"></i><b>Cobalt</b>#2340E0</li>
+        <li><i style="background:#0E1440"></i><b>Night</b>#0E1440</li>
+        <li><i style="background:#E3E8FA"></i><b>Mist</b>#E3E8FA</li>
+        <li><i style="background:#FF6B2C"></i><b>Drop</b>#FF6B2C</li>
+        <li><i style="background:#FFFFFF"></i><b>White</b>#FFFFFF</li>
+      </ul>
+      <div class="sample" role="group" aria-label="Sixty applied to a frame counter">
+        <svg viewBox="0 0 32 32" width="72" height="72" aria-hidden="true"><path d="M16.00 6.50L16.00 2.50M16.99 6.55L17.41 2.57M17.98 6.71L18.81 2.80M18.94 6.96L20.17 3.16M19.86 7.32L21.49 3.67M20.75 7.77L22.75 4.31M21.58 8.31L23.94 5.08M22.36 8.94L25.03 5.97M23.06 9.64L26.03 6.97M23.69 10.42L26.92 8.06M24.23 11.25L27.69 9.25M24.68 12.14L28.33 10.51M25.04 13.06L28.84 11.83M25.29 14.02L29.20 13.19M25.45 15.01L29.43 14.59M25.50 16.00L29.50 16.00M25.45 16.99L29.43 17.41M25.29 17.98L29.20 18.81M25.04 18.94L28.84 20.17M24.68 19.86L28.33 21.49M24.23 20.75L27.69 22.75M23.69 21.58L26.92 23.94M23.06 22.36L26.03 25.03M22.36 23.06L25.03 26.03M21.58 23.69L23.94 26.92M20.75 24.23L22.75 27.69M19.86 24.68L21.49 28.33M18.94 25.04L20.17 28.84M17.98 25.29L18.81 29.20M16.99 25.45L17.41 29.43M16.00 25.50L16.00 29.50M15.01 25.45L14.59 29.43M14.02 25.29L13.19 29.20M13.06 25.04L11.83 28.84M12.14 24.68L10.51 28.33M11.25 24.23L9.25 27.69M10.42 23.69L8.06 26.92M9.64 23.06L6.97 26.03M8.94 22.36L5.97 25.03M8.31 21.58L5.08 23.94M7.77 20.75L4.31 22.75M7.32 19.86L3.67 21.49M6.96 18.94L3.16 20.17M6.71 17.98L2.80 18.81M6.55 16.99L2.57 17.41M6.50 16.00L2.50 16.00M6.55 15.01L2.57 14.59M6.71 14.02L2.80 13.19" stroke="#2340E0" stroke-width="1.1" stroke-linecap="round"/><path d="M5.06 12.45L3.16 11.83M5.49 11.32L3.67 10.51M6.04 10.25L4.31 9.25M6.70 9.24L5.08 8.06M7.45 8.30L5.97 6.97M8.30 7.45L6.97 5.97M9.24 6.70L8.06 5.08M10.25 6.04L9.25 4.31M11.32 5.49L10.51 3.67M12.45 5.06L11.83 3.16M13.61 4.75L13.19 2.80M14.80 4.56L14.59 2.57" stroke="#FF6B2C" stroke-width="1.1" stroke-linecap="round"/></svg>
+        <p>48 of 60 frames on time. Blur is off on this phone.</p>
+      </div>
+      <dl class="facts">
+        <div><dt>Type</dt><dd>Unbounded, a wide rounded display face, over Archivo.</dd></div>
+        <div><dt>Strength</dt><dd>Friendly, and anyone reads it as a meter.</dd></div>
+        <div><dt>Risk</dt><dd>Sixty ticks blur into a plain ring below 24 px, and dials are already the performance-tool cliche (think Lighthouse).</dd></div>
+      </dl>
+    </article>
+  </div>
+
+  <section class="decision" aria-labelledby="decision-title">
+    <h2 id="decision-title">Why Deadline</h2>
+    <div class="decision__body">
+      <p>It is the only direction where the logo, the docs diagrams and the product's own debug overlay are the same drawing. Developers already read flame charts and frame bars in their devtools, so the mark explains the library before the tagline does.</p>
+      <p>It also survives the hard cases: a 16 px favicon, one-color print, and a light documentation theme. Phosphor is the more atmospheric idea and can return as the look of the debug overlay. Sixty's frame counting lives on in the motion system, where durations are written in frames.</p>
+      <p>After review the identity moved to dark first. The mark was already drawn on Ink, so the bars and the vsync line now sit straight on the page, and the light theme stays behind as tokens for documentation.</p>
+      <a class="button" href="index.html">Open the brand guide</a>
+    </div>
+  </section>
+</main>
+</body>
+</html>

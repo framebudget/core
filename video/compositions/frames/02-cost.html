@@ -1,0 +1,361 @@
+<template id="f02-cost-template">
+  <div id="root" data-composition-id="02-cost" data-start="0" data-duration="7.1" data-width="1920" data-height="1080">
+    <style>
+      @font-face{font-family:"Archivo";font-weight:400 800;font-stretch:100% 125%;font-style:normal;font-display:block;src:url("assets/fonts/archivo-var.woff2") format("woff2");}
+      @font-face{font-family:"Martian Mono";font-weight:400 700;font-style:normal;font-display:block;src:url("assets/fonts/martian-mono-var.woff2") format("woff2");}
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+      }
+      #f02-cost-ground {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 60% at 50% -10%, #1A1F3D 0%, rgba(26,31,61,0) 60%), #0F1225;
+      }
+
+      /* Headline (h1 role) and supporting line (lead role) */
+      #f02-cost-h1 {
+        position: absolute;
+        left: 120px;
+        top: 112px;
+        margin: 0;
+        font-family: "Archivo", sans-serif;
+        font-size: 104px;
+        font-weight: 780;
+        font-stretch: 116%;
+        letter-spacing: -0.035em;
+        line-height: 1.0;
+        color: #E8EBF2;
+        white-space: nowrap;
+      }
+      .f02-cost-word {
+        display: inline-block;
+      }
+      #f02-cost-lead {
+        position: absolute;
+        left: 120px;
+        top: 352px;
+        width: 700px;
+        margin: 0;
+        font-family: "Archivo", sans-serif;
+        font-size: 34px;
+        font-weight: 450;
+        line-height: 1.38;
+        color: #9AA3BC;
+        white-space: nowrap;
+      }
+
+      /* Shared mono roles */
+      .f02-cost-value {
+        font-family: "Martian Mono", monospace;
+        font-size: 22px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        color: #E8EBF2;
+        white-space: nowrap;
+      }
+      .f02-cost-label {
+        font-family: "Martian Mono", monospace;
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        line-height: 1;
+        color: #9AA3BC;
+        white-space: nowrap;
+      }
+
+      /* Axis */
+      #f02-cost-axis0 {
+        position: absolute;
+        left: 150px;
+        top: 466px;
+        color: #9AA3BC;
+      }
+      #f02-cost-vsync-value {
+        position: absolute;
+        left: 872px;
+        top: 466px;
+        width: 200px;
+        text-align: center;
+        color: #FF5A92;
+      }
+      #f02-cost-hz {
+        position: absolute;
+        left: 872px;
+        top: 712px;
+        width: 200px;
+        text-align: center;
+      }
+
+      /* Frame-budget track: 30 units of 48px inside a 6px inset */
+      #f02-cost-track {
+        position: absolute;
+        left: 150px;
+        top: 520px;
+        width: 1452px;
+        height: 96px;
+        box-sizing: border-box;
+        background: #0B0E1E;
+        border: 1px solid #2A3052;
+        border-radius: 2px;
+        transform-origin: 0% 50%;
+      }
+
+      /* Segments */
+      .f02-cost-seg {
+        position: absolute;
+        top: 526px;
+        height: 84px;
+      }
+      .f02-cost-fill {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        border-radius: 2px;
+        transform-origin: 0% 50%;
+      }
+      .f02-cost-in {
+        position: absolute;
+        left: 16px;
+        top: 0;
+        height: 84px;
+        line-height: 84px;
+        color: #0F1225;
+      }
+      .f02-cost-tick {
+        position: absolute;
+        top: 84px;
+        left: calc(50% - 1px);
+        width: 2px;
+        transform-origin: 50% 0%;
+      }
+      .f02-cost-under {
+        position: absolute;
+        left: calc(50% - 150px);
+        width: 300px;
+        text-align: center;
+        color: #E8EBF2;
+      }
+
+      #f02-cost-seg-app { left: 157px; width: 334px; }
+      #f02-cost-seg-parallax { left: 493px; width: 238px; }
+      #f02-cost-seg-pageTransition { left: 733px; width: 142px; }
+      #f02-cost-seg-canvasHiRes { left: 877px; width: 382px; }
+      #f02-cost-seg-sound { left: 1261px; width: 46px; }
+      #f02-cost-seg-blur { left: 1309px; width: 286px; }
+
+      /* Vsync line at 17 of 30 units */
+      #f02-cost-vsync {
+        position: absolute;
+        left: 970.5px;
+        top: 500px;
+        width: 3px;
+        height: 200px;
+        background: #FF5A92;
+        transform-origin: 50% 100%;
+      }
+
+      /* Budget status, discrete text states */
+      #f02-cost-status {
+        position: absolute;
+        left: 1630px;
+        top: 559px;
+        min-width: 170px;
+      }
+
+      /* Off chips */
+      .f02-cost-chipwrap {
+        position: absolute;
+        top: 770px;
+        width: 400px;
+        display: flex;
+        justify-content: center;
+      }
+      #f02-cost-chipwrap-canvasHiRes { left: 868px; }
+      #f02-cost-chipwrap-blur { left: 1252px; }
+      .f02-cost-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        height: 46px;
+        padding: 0 18px;
+        box-sizing: border-box;
+        border-radius: 6px;
+        background: transparent;
+        border: 1px solid #2A3052;
+        color: #9AA3BC;
+      }
+      .f02-cost-swatch {
+        width: 14px;
+        height: 14px;
+        box-sizing: border-box;
+        border-radius: 2px;
+        border: 2px solid currentColor;
+      }
+      .f02-cost-chiptext {
+        position: relative;
+        color: #9AA3BC;
+      }
+      .f02-cost-strike {
+        position: absolute;
+        left: -2px;
+        right: -2px;
+        top: 50%;
+        height: 2px;
+        margin-top: -1px;
+        background: #9AA3BC;
+        transform-origin: 0% 50%;
+      }
+    </style>
+
+    <div id="f02-cost-ground" class="clip" data-start="0" data-duration="7.1" data-track-index="0"></div>
+
+    <h1 id="f02-cost-h1"><span class="f02-cost-word">Every</span> <span class="f02-cost-word">effect</span> <span class="f02-cost-word">costs</span><br><span class="f02-cost-word">frame</span> <span class="f02-cost-word">time.</span></h1>
+    <p id="f02-cost-lead">Spend it where the device can pay.</p>
+
+    <div id="f02-cost-axis0" class="f02-cost-value">0 ms</div>
+    <div id="f02-cost-track"></div>
+
+    <div id="f02-cost-seg-app" class="f02-cost-seg">
+      <div class="f02-cost-fill" style="background:#7D86A6"></div>
+      <div class="f02-cost-in f02-cost-value">app</div>
+    </div>
+    <div id="f02-cost-seg-parallax" class="f02-cost-seg">
+      <div class="f02-cost-fill" style="background:#F2B21B"></div>
+      <div class="f02-cost-in f02-cost-value">parallax</div>
+    </div>
+    <div id="f02-cost-seg-pageTransition" class="f02-cost-seg">
+      <div class="f02-cost-fill" style="background:#9474F2"></div>
+      <div class="f02-cost-tick" style="background:#9474F2;height:56px"></div>
+      <div data-layout-allow-overflow class="f02-cost-under f02-cost-value" style="top:146px">pageTransition</div>
+    </div>
+    <div id="f02-cost-seg-canvasHiRes" class="f02-cost-seg">
+      <div class="f02-cost-fill" style="background:#2FB67C"></div>
+      <div class="f02-cost-in f02-cost-value">canvasHiRes</div>
+    </div>
+    <div id="f02-cost-seg-sound" class="f02-cost-seg">
+      <div class="f02-cost-fill" style="background:#1FA6CA"></div>
+      <div class="f02-cost-tick" style="background:#1FA6CA;height:16px"></div>
+      <div data-layout-allow-overflow class="f02-cost-under f02-cost-value" style="top:106px">sound</div>
+    </div>
+    <div id="f02-cost-seg-blur" class="f02-cost-seg">
+      <div class="f02-cost-fill" style="background:#6482F5"></div>
+      <div class="f02-cost-in f02-cost-value">blur</div>
+    </div>
+
+    <div id="f02-cost-vsync"></div>
+    <div id="f02-cost-vsync-value" class="f02-cost-value">16.7 ms</div>
+    <div id="f02-cost-hz" class="f02-cost-label">60 Hz</div>
+
+    <div id="f02-cost-status" class="f02-cost-label"><span id="f02-cost-status-text"></span></div>
+
+    <div id="f02-cost-chipwrap-canvasHiRes" class="f02-cost-chipwrap">
+      <div class="f02-cost-chip f02-cost-value">
+        <span class="f02-cost-swatch" style="color:#2FB67C"></span>
+        <span class="f02-cost-chiptext">canvasHiRes<span class="f02-cost-strike"></span></span>
+      </div>
+    </div>
+    <div id="f02-cost-chipwrap-blur" class="f02-cost-chipwrap">
+      <div class="f02-cost-chip f02-cost-value">
+        <span class="f02-cost-swatch" style="color:#6482F5"></span>
+        <span class="f02-cost-chiptext">blur<span class="f02-cost-strike"></span></span>
+      </div>
+    </div>
+
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var q = function (id) { return document.querySelector('[id="' + id + '"]'); };
+        var within = function (el, cls) { return el.querySelector('[class~="' + cls + '"]'); };
+
+        var tl = gsap.timeline({ paused: true });
+        var DURATION = 6.5;
+
+        // Scene 1 (0.0-1.4s): headline words rise, the track draws in from the left,
+        // then the axis, the vsync line and its labels.
+        var words = document.querySelectorAll('.f02-cost-word');
+        tl.fromTo(words, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.08 }, 0.05);
+        tl.fromTo(q("f02-cost-track"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power3.out" }, 0.3);
+        tl.fromTo(q("f02-cost-axis0"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.6);
+        tl.fromTo(q("f02-cost-vsync"), { scaleY: 0 }, { scaleY: 1, duration: 0.6, ease: "expo.out" }, 0.8);
+        tl.fromTo(q("f02-cost-vsync-value"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.95);
+        tl.fromTo(q("f02-cost-hz"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 1.05);
+
+        // Scene 2 (1.4-4.0s): segments fill the track left to right, one per beat.
+        // Widths are app 7, parallax 5, pageTransition 3, canvasHiRes 8, sound 1, blur 6 units.
+        var SEGMENTS = ["app", "parallax", "pageTransition", "canvasHiRes", "sound", "blur"];
+        var SEG_START = 1.4;
+        var SEG_BEAT = 0.35;
+        SEGMENTS.forEach(function (name, i) {
+          var seg = q("f02-cost-seg-" + name);
+          var t = SEG_START + i * SEG_BEAT;
+          tl.fromTo(within(seg, "f02-cost-fill"), { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power3.out" }, t);
+          var inside = within(seg, "f02-cost-in");
+          if (inside) {
+            tl.fromTo(inside, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, t + 0.15);
+          }
+          var tick = within(seg, "f02-cost-tick");
+          if (tick) {
+            tl.fromTo(tick, { scaleY: 0 }, { scaleY: 1, duration: 0.3, ease: "power3.out" }, t + 0.15);
+            tl.fromTo(within(seg, "f02-cost-under"), { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, t + 0.25);
+          }
+        });
+
+        // Budget status: discrete text states (instant swaps), the wrapper eases in once.
+        var STATUS = [
+          { t: 0, text: "" },
+          { t: 2.75, text: "over budget" },
+          { t: 5.3, text: "fits" }
+        ];
+        var statusText = q("f02-cost-status-text");
+        var lastStatus = null;
+        function statusAt(time) {
+          for (var i = STATUS.length - 1; i >= 0; i--) {
+            if (time >= STATUS[i].t) return STATUS[i].text;
+          }
+          return "";
+        }
+        var driver = { t: 0 };
+        tl.fromTo(driver, { t: 0 }, {
+          t: DURATION,
+          duration: DURATION,
+          ease: "none",
+          onUpdate: function () {
+            var next = statusAt(driver.t);
+            if (next !== lastStatus) {
+              statusText.textContent = next;
+              lastStatus = next;
+            }
+          }
+        }, 0);
+        tl.fromTo(q("f02-cost-status"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 2.75);
+
+        // Scene 3 (4.0-6.5s): canvasHiRes then blur drop out into off chips,
+        // sound slides left to close the gap, the total settles under the line.
+        var DROPS = [
+          { name: "canvasHiRes", t: 4.0 },
+          { name: "blur", t: 4.3 }
+        ];
+        DROPS.forEach(function (d) {
+          tl.fromTo(q("f02-cost-seg-" + d.name), { y: 0, opacity: 1 }, { y: 90, opacity: 0, duration: 0.55, ease: "power2.in" }, d.t);
+          var wrap = q("f02-cost-chipwrap-" + d.name);
+          tl.fromTo(wrap, { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, d.t + 0.3);
+          tl.fromTo(within(wrap, "f02-cost-strike"), { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: "power3.out" }, d.t + 0.6);
+        });
+
+        // sound moves from unit 23 to unit 15: 8 units of 48px.
+        tl.fromTo(q("f02-cost-seg-sound"), { x: 0 }, { x: -384, duration: 0.6, ease: "power3.out" }, 4.7);
+
+        tl.fromTo(q("f02-cost-lead"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 4.6);
+
+        // Hold from 5.3s to the end.
+        window.__timelines["02-cost"] = tl;
+      })();
+    </script>
+  </div>
+</template>

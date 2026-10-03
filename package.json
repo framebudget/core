@@ -1,0 +1,14 @@
+{
+  "name": "framebudget-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "site"
+  ],
+  "scripts": {
+    "build": "npm run build -w framebudget",
+    "test": "npm run test -w framebudget",
+    "typecheck": "npm run typecheck -w framebudget",
+    "size": "npm run size -w framebudget"
+  }
+}

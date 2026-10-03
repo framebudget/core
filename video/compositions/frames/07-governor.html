@@ -1,0 +1,454 @@
+<template>
+  <style>
+    @font-face{font-family:"Archivo";font-weight:400 800;font-stretch:100% 125%;font-style:normal;font-display:block;src:url("assets/fonts/archivo-var.woff2") format("woff2");}
+    @font-face{font-family:"Martian Mono";font-weight:400 700;font-style:normal;font-display:block;src:url("assets/fonts/martian-mono-var.woff2") format("woff2");}
+
+    #root {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #E8EBF2;
+      font-family: "Archivo", sans-serif;
+    }
+
+    /* Ground: full-bleed clip on the lowest track */
+    #f07-governor-ground {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(120% 60% at 50% -10%, #1A1F3D 0%, rgba(26,31,61,0) 60%), #0F1225;
+    }
+
+    /* Shared chrome */
+    .f07-governor-chrome {
+      position: absolute;
+      top: 96px;
+      font-family: "Martian Mono", monospace;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9AA3BC;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    #f07-governor-kicker { left: 120px; }
+    #f07-governor-step { right: 120px; }
+
+    /* Left column: headline + supporting line */
+    #f07-governor-copy {
+      position: absolute;
+      left: 120px;
+      top: 200px;
+      width: 720px;
+    }
+    #f07-governor-headline {
+      margin: 0;
+      font-family: "Archivo", sans-serif;
+      font-size: 75px;
+      font-weight: 760;
+      font-stretch: 114%;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: #E8EBF2;
+    }
+    .f07-governor-word { display: inline-block; }
+    #f07-governor-lead {
+      margin: 32px 0 0 0;
+      width: 700px;
+      font-family: "Archivo", sans-serif;
+      font-size: 34px;
+      font-weight: 450;
+      line-height: 1.38;
+      color: #9AA3BC;
+    }
+
+    /* Label role */
+    .f07-governor-label {
+      font-family: "Martian Mono", monospace;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9AA3BC;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* Heat meter */
+    #f07-governor-heat {
+      position: absolute;
+      left: 940px;
+      top: 252px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    #f07-governor-heat-track {
+      position: relative;
+      width: 200px;
+      height: 10px;
+      box-sizing: border-box;
+      border: 1px solid #9AA3BC;
+      border-radius: 2px;
+      background: #0B0E1E;
+      overflow: hidden;
+    }
+    #f07-governor-heat-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: #E8EBF2;
+      transform-origin: left center;
+    }
+
+    /* Effect chips */
+    #f07-governor-chips {
+      position: absolute;
+      left: 940px;
+      top: 290px;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .f07-governor-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 46px;
+      box-sizing: border-box;
+      padding: 0 18px;
+      gap: 12px;
+      border-radius: 6px;
+      background: #1F2440;
+      border: 1px solid #2A3052;
+      font-family: "Martian Mono", monospace;
+      font-size: 22px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      color: #E8EBF2;
+      line-height: 1;
+    }
+    .f07-governor-swatch {
+      width: 14px;
+      height: 14px;
+      box-sizing: border-box;
+      border-radius: 2px;
+      border: 2px solid var(--fx);
+      background: var(--fx);
+      flex: none;
+    }
+    .f07-governor-chip-text { position: relative; }
+    .f07-governor-strike {
+      position: absolute;
+      left: -3px;
+      right: -3px;
+      top: 50%;
+      height: 2px;
+      margin-top: -1px;
+      background: #9AA3BC;
+      display: none;
+    }
+    .f07-governor-chip.f07-governor-off {
+      background: transparent;
+      color: #9AA3BC;
+    }
+    .f07-governor-off .f07-governor-swatch { background: transparent; }
+    .f07-governor-off .f07-governor-strike { display: block; }
+
+    /* Frame-time chart */
+    #f07-governor-chart {
+      position: absolute;
+      left: 940px;
+      top: 364px;
+      width: 720px;
+      height: 420px;
+      box-sizing: border-box;
+      background: #0B0E1E;
+      border: 1px solid #2A3052;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    #f07-governor-strip {
+      position: absolute;
+      left: 718px;
+      top: 0;
+      bottom: 20px;
+      width: 1px;
+    }
+    .f07-governor-seg {
+      position: absolute;
+      width: 7px;
+      border-radius: 2px;
+    }
+    .f07-governor-marker {
+      position: absolute;
+      bottom: 0;
+      width: 1px;
+    }
+    .f07-governor-marker-line {
+      position: absolute;
+      inset: 0;
+      background: #5F6896;
+      transform-origin: center top;
+    }
+    .f07-governor-marker-label {
+      position: absolute;
+      top: 0;
+      right: 9px;
+      font-family: "Martian Mono", monospace;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1;
+      color: #E8EBF2;
+      white-space: nowrap;
+    }
+    #f07-governor-vsync {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 196px;
+      height: 3px;
+      background: #FF5A92;
+      transform-origin: left center;
+    }
+    #f07-governor-vsync-label {
+      position: absolute;
+      left: 1676px;
+      top: 552px;
+      font-family: "Martian Mono", monospace;
+      font-size: 22px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      color: #FF5A92;
+      white-space: nowrap;
+    }
+    #f07-governor-thread {
+      position: absolute;
+      left: 940px;
+      top: 804px;
+    }
+  </style>
+
+  <div id="root" data-composition-id="07-governor" data-width="1920" data-height="1080" data-duration="5.5">
+    <div id="f07-governor-ground" class="clip" data-start="0" data-duration="5.5" data-track-index="0"></div>
+
+    <div id="f07-governor-kicker" class="f07-governor-chrome">HOW IT WORKS</div>
+    <div id="f07-governor-step" class="f07-governor-chrome">04 / 06</div>
+
+    <div id="f07-governor-copy">
+      <h2 id="f07-governor-headline"><span class="f07-governor-word">A</span> <span class="f07-governor-word">governor</span> <span class="f07-governor-word">watches</span> <span class="f07-governor-word">real</span> <span class="f07-governor-word">frames.</span></h2>
+      <p id="f07-governor-lead">When frames run long as the device heats up, it steps the most expensive effect down. One at a time.</p>
+    </div>
+
+    <div id="f07-governor-heat">
+      <div class="f07-governor-label">device heating up</div>
+      <div id="f07-governor-heat-track"><div id="f07-governor-heat-fill"></div></div>
+    </div>
+
+    <div id="f07-governor-chips">
+      <div class="f07-governor-chip" data-effect="parallax"><span class="f07-governor-swatch" style="--fx:#F2B21B"></span><span class="f07-governor-chip-text">parallax<span class="f07-governor-strike"></span></span></div>
+      <div class="f07-governor-chip" data-effect="pageTransition"><span class="f07-governor-swatch" style="--fx:#9474F2"></span><span class="f07-governor-chip-text">pageTransition<span class="f07-governor-strike"></span></span></div>
+      <div class="f07-governor-chip" data-effect="blur"><span class="f07-governor-swatch" style="--fx:#6482F5"></span><span class="f07-governor-chip-text">blur<span class="f07-governor-strike"></span></span></div>
+      <div class="f07-governor-chip" data-effect="canvasHiRes"><span class="f07-governor-swatch" style="--fx:#2FB67C"></span><span class="f07-governor-chip-text">canvasHiRes<span class="f07-governor-strike"></span></span></div>
+    </div>
+
+    <div id="f07-governor-chart">
+      <div id="f07-governor-strip"></div>
+      <div id="f07-governor-vsync"></div>
+    </div>
+    <div id="f07-governor-vsync-label">16.7 ms</div>
+
+    <div id="f07-governor-thread" class="f07-governor-label">main thread + workers</div>
+  </div>
+
+  <script src="assets/vendor/gsap.min.js"></script>
+  <script>
+    (function () {
+      var P = "f07-governor-";
+      function byId(name) { return document.getElementById(P + name); }
+      function byClass(scope, name) { return Array.prototype.slice.call(scope.querySelectorAll('[class~="' + P + name + '"]')); }
+
+      var root = byId("chart").closest('[data-composition-id="07-governor"]');
+
+      /* Stream geometry: one bar per sampled frame, 15 samples per second, entering at the right edge. */
+      var PITCH = 11;          /* px between bar starts (7px bar + 4px gap) */
+      var RATE = 15;           /* bars per second */
+      var SPEED = PITCH * RATE;/* strip travel in px per second */
+      var PX_PER_MS = 12;      /* 16.7 ms sits 200px above the baseline */
+      var I_MIN = -66;         /* pre-fills the 718px chart at t = 0 */
+      var I_MAX = 75;          /* last bar enters at t = 5 */
+      var I_CANVAS_OFF = 30;   /* t = 2.0s */
+      var I_BLUR_OFF = 44;     /* t = 2.933s */
+      var T1 = I_CANVAS_OFF / RATE;
+      var T2 = I_BLUR_OFF / RATE;
+      var DURATION = 5;
+
+      var COLORS = {
+        app: "#7D86A6",
+        parallax: "#F2B21B",
+        pageTransition: "#9474F2",
+        blur: "#6482F5",
+        canvasHiRes: "#2FB67C"
+      };
+
+      /* Heat ramp of the device, a smoothstep from 0.9s to 1.95s. Deterministic in the sample time. */
+      function heat(t) {
+        var x = (t - 0.9) / 1.05;
+        if (x < 0) x = 0;
+        if (x > 1) x = 1;
+        return x * x * (3 - 2 * x);
+      }
+      /* Per-frame jitter, a fixed function of the bar index (within plus or minus 1 ms). */
+      function jitter(i) {
+        return 0.6 * Math.sin(i * 1.7) + 0.4 * Math.sin(i * 0.63 + 1.1);
+      }
+
+      var strip = byId("strip");
+      var frag = document.createDocumentFragment();
+      for (var i = I_MIN; i <= I_MAX; i++) {
+        var t = i / RATE;
+        var k = 1 + heat(t);
+        var segs = [
+          [4.2 * k + jitter(i), COLORS.app],
+          [1.2 * k, COLORS.parallax],
+          [1.0 * k, COLORS.pageTransition]
+        ];
+        if (i < I_BLUR_OFF) segs.push([2.6 * k, COLORS.blur]);
+        if (i < I_CANVAS_OFF) segs.push([3.0 * k, COLORS.canvasHiRes]);
+        var y = 0;
+        for (var s = 0; s < segs.length; s++) {
+          var h = segs[s][0] * PX_PER_MS;
+          var seg = document.createElement("div");
+          seg.className = P + "seg";
+          seg.style.left = (i * PITCH) + "px";
+          seg.style.bottom = y + "px";
+          seg.style.height = (h - 2) + "px";
+          seg.style.background = segs[s][1];
+          frag.appendChild(seg);
+          y += h;
+        }
+      }
+
+      /* Governor markers, placed in the 4px gap just before the first bar that runs without the effect. */
+      function makeMarker(index, rowTop, text) {
+        var m = document.createElement("div");
+        m.className = P + "marker";
+        m.style.left = (index * PITCH - 2.5) + "px";
+        m.style.top = rowTop + "px";
+        var line = document.createElement("div");
+        line.className = P + "marker-line";
+        var label = document.createElement("div");
+        label.className = P + "marker-label";
+        label.textContent = text;
+        m.appendChild(line);
+        m.appendChild(label);
+        frag.appendChild(m);
+        return { wrap: m, line: line };
+      }
+      var markerCanvas = makeMarker(I_CANVAS_OFF, 44, "canvasHiRes off");
+      var markerBlur = makeMarker(I_BLUR_OFF, 14, "blur off");
+      strip.appendChild(frag);
+
+      var chips = byClass(root, "chip");
+
+      var tl = gsap.timeline({ paused: true });
+
+      /* Scene 1 (0.0 to 1.2s): headline words, chart, chips, heat meter, thread label. */
+      tl.fromTo(byClass(root, "word"),
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.07 }, 0);
+
+      tl.fromTo(byId("chart"),
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.1);
+
+      tl.fromTo(byId("vsync"),
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, ease: "expo.out" }, 0.3);
+
+      tl.fromTo(byId("vsync-label"),
+        { opacity: 0, x: -24 },
+        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.55);
+
+      tl.fromTo(chips,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.08 }, 0.35);
+
+      tl.fromTo(byId("heat"),
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.7);
+
+      tl.fromTo(byId("thread"),
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.9);
+
+      /* The stream: bars keep entering from the right for the whole shot. */
+      tl.fromTo(strip,
+        { x: 0 },
+        { x: -SPEED * DURATION, duration: DURATION, ease: "none" }, 0);
+
+      /* Scene 2 (1.2 to 3.4s): heat meter fills in step with the heat ramp the bars are sampled from. */
+      tl.fromTo(byId("heat-fill"),
+        { scaleX: 0.16 },
+        { scaleX: 0.94, duration: 1.05, ease: "power1.inOut" }, 0.9);
+
+      /* Markers drop where the governor acts. */
+      tl.fromTo(markerCanvas.wrap,
+        { opacity: 0, y: -28 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, T1);
+      tl.fromTo(markerCanvas.line,
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.5, ease: "power3.out" }, T1);
+      tl.fromTo(markerBlur.wrap,
+        { opacity: 0, y: -28 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, T2);
+      tl.fromTo(markerBlur.line,
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.5, ease: "power3.out" }, T2);
+
+      /* Chip states as a discrete sequence: instant switches at the governor thresholds. */
+      var STATES = [
+        { t: 0, off: [] },
+        { t: T1, off: ["canvasHiRes"] },
+        { t: T2, off: ["canvasHiRes", "blur"] }
+      ];
+      function stateAt(time) {
+        for (var n = STATES.length - 1; n >= 0; n--) {
+          if (time >= STATES[n].t) return n;
+        }
+        return 0;
+      }
+      var lastState = 0;
+      var driver = { t: 0 };
+      tl.to(driver, {
+        t: DURATION,
+        duration: DURATION,
+        ease: "none",
+        onUpdate: function () {
+          var n = stateAt(driver.t);
+          if (n === lastState) return;
+          lastState = n;
+          var off = STATES[n].off;
+          chips.forEach(function (c) {
+            c.classList.toggle(P + "off", off.indexOf(c.getAttribute("data-effect")) !== -1);
+          });
+        }
+      }, 0);
+
+      /* Scene 3 (3.4 to 5.0s): frames fit again, the supporting line lands, hold. */
+      tl.fromTo(byId("lead"),
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 3.45);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["07-governor"] = tl;
+    })();
+  </script>
+</template>
