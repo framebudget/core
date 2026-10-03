@@ -17,5 +17,7 @@ export function parseStoredState(value: unknown): StoredState {
     ...(Array.isArray(value.qualified) && { qualified: value.qualified.filter(isString) }),
     ...(isRecord(value.remote) && { remote: value.remote }),
     remoteAt: toFiniteNumber(value.remoteAt),
+    reportedAt: toFiniteNumber(value.reportedAt),
+    ...(isString(value.reportedCal) && { reportedCal: value.reportedCal }),
   };
 }

@@ -1,4 +1,5 @@
 import type { ShareOptions } from "../../core/telemetry/telemetry.types";
+import { isReportDue } from "../../core/telemetry/is-report-due";
 import { isSharingAllowed } from "../../core/telemetry/is-sharing-allowed";
 import { safe } from "../../platform/scope/safe";
 import type { Scope } from "../../platform/scope/scope.types";
@@ -37,5 +38,6 @@ export function startSharing(state: BudgetState): void {
   if (share.calibrationUrl) refreshRemoteCalibration(scope, context, share.calibrationUrl);
   if (state.isSharingArmed) return;
   state.isSharingArmed = true;
+  if (!isReportDue(share, context.stored, context.calibration.version, Date.now())) return;
   if (isSampled(state, share)) armReportFlush(state, scope);
 }
