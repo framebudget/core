@@ -23,6 +23,21 @@ npm install framebudget
 
 ESM only, with type declarations. `react` is an optional peer dependency, needed only for `framebudget/react`.
 
+### From GitHub Packages
+
+Releases are published to GitHub Packages as `@alysnnix/framebudget`. Point the scope at the GitHub registry in your project's `.npmrc`, with a GitHub token that has `read:packages`:
+
+```ini
+@alysnnix:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Then install it under its usual name, so the imports below stay as they are (prereleases are on the `next` dist-tag):
+
+```sh
+npm install framebudget@npm:@alysnnix/framebudget
+```
+
 ## 1. Add the boot script
 
 Inline the boot script as the first script in `<head>`, before your CSS. It runs the cold benchmark (about 2 ms), decides, and writes the result on `<html>`:
@@ -236,7 +251,7 @@ With `calibrationUrl`, framebudget fetches a calibration patch (JSON in the `cal
 ```sh
 npm install
 npm run build      # boot script bundle, then tsup (ESM and .d.ts)
-npm test           # vitest
+npm test           # vitest, then the release script tests (node --test)
 npm run typecheck
 npm run lint       # eslint (rules below); lint:fix applies the safe fixes
 npm run format     # prettier
@@ -258,3 +273,14 @@ The source is layered, and `eslint.config.js` enforces the layers:
 Lint limits: 80 lines per file and 60 per function (blank and comment lines excluded), 8 files per folder (group by concern in subfolders past that), interfaces and type aliases only in `*.types.ts` files (`*.enum.ts` for a const object and its union type), kebab-case file names, descriptive identifiers.
 
 `src/boot/source.generated.ts` is generated from `src/boot/runtime.ts` by `scripts/build-boot.mjs`. The build, test and typecheck scripts regenerate it.
+
+### Releases
+
+Create a release by hand on GitHub with a new tag `vX.Y.Z` (or `vX.Y.Z-rc.N`), above the previous one. `.github/workflows/release.yml` then:
+
+1. checks the tag (format and order) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
+2. writes the notes from the commits since the previous tag, split into Library (`src/`, `README.md`, the build, runtime `package.json` fields) and Website (`docs/`, `worker/`), renders the release art (`assets/brand/build/release.html`) and puts both on the release;
+3. opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package version and the art in `docs/public/releases/`;
+4. publishes `@alysnnix/framebudget` to GitHub Packages when the library changed (`next` dist-tag for prereleases), and deploys the site and the worker to Cloudflare every time.
+
+Preview the notes with `npm run release:notes -- --tag v0.2.0 --dry-run` (HEAD stands in for a tag that does not exist yet), and the art with `npm run release:art -- --version 0.2.0 --date 2026-10-03 --notes notes.json --out art.png` (headless Chrome, `CHROME_PATH` to override).
