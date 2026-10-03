@@ -25,17 +25,17 @@ ESM only, with type declarations. `react` is an optional peer dependency, needed
 
 ### From GitHub Packages
 
-Releases are published to GitHub Packages as `@alysnnix/framebudget`. Point the scope at the GitHub registry in your project's `.npmrc`, with a GitHub token that has `read:packages`:
+Releases are published to GitHub Packages as `@framebudget/framebudget`. Point the scope at the GitHub registry in your project's `.npmrc`, with a GitHub token that has `read:packages`:
 
 ```ini
-@alysnnix:registry=https://npm.pkg.github.com
+@framebudget:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 Then install it under its usual name, so the imports below stay as they are (prereleases are on the `next` dist-tag):
 
 ```sh
-npm install framebudget@npm:@alysnnix/framebudget
+npm install framebudget@npm:@framebudget/framebudget
 ```
 
 ## 1. Add the boot script
@@ -297,7 +297,7 @@ git tag v0.3.0 && git push origin v0.3.0
 
 1. checks the tag (format, order, no existing release) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
 2. writes the notes from the commits since the previous tag, split into Library (`src/`, `README.md`, the build, runtime `package.json` fields) and Website (`docs/`, `worker/`), renders the release art (`assets/brand/build/release.html`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package version and the art in `docs/public/releases/`;
-3. when the library changed: verifies the registry signatures of the dependencies, audits them, tests, builds and packs the tarball once (only `dist/`, `package.json` and `README.md`, no install scripts), then publishes that exact tarball to GitHub Packages as `@alysnnix/framebudget` (`next` dist-tag for prereleases);
+3. when the library changed: verifies the registry signatures of the dependencies, audits them, tests, builds and packs the tarball once (only `dist/`, `package.json` and `README.md`, no install scripts), then publishes that exact tarball to GitHub Packages as `@framebudget/framebudget` (`next` dist-tag for prereleases);
 4. deploys the site and the worker to Cloudflare;
 5. creates a draft release with the notes, the art, the tarball and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
 

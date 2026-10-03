@@ -7,7 +7,7 @@
 #   validate  tag format and order, bump warning, what shipped (library_changed)
 #   notes     release notes, release art, changelog pull request (release/vX.Y.Z)
 #   package   when the library changed: audit, test, build, pack the tarball once
-#   publish   that exact tarball to GitHub Packages as @alysnnix/framebudget
+#   publish   that exact tarball to GitHub Packages as @framebudget/framebudget
 #   deploy    the website and the worker to Cloudflare, always
 #   release   draft with notes, art, tarball and SHA256SUMS, then publish (immutable)
 name: Release
@@ -147,7 +147,7 @@ jobs:
       # The package is `framebudget` in the repository; GitHub Packages needs the owner's scope.
       - name: Scope the package for GitHub Packages
         run: |
-          npm pkg set name=@alysnnix/framebudget version="$VERSION" \
+          npm pkg set name=@framebudget/framebudget version="$VERSION" \
             publishConfig.registry=https://npm.pkg.github.com \
             repository.type=git repository.url="git+https://github.com/$GITHUB_REPOSITORY.git"
       - name: Pack once and check what ships
@@ -199,7 +199,7 @@ jobs:
         with:
           node-version: 22
           registry-url: https://npm.pkg.github.com
-          scope: "@alysnnix"
+          scope: "@framebudget"
       # The exact tarball that is attached to the release, so its SHA-256 and
       # the release attestation describe what the registry serves.
       - name: Publish
