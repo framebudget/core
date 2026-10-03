@@ -2,3 +2,6 @@ npx lint-staged
 npm run typecheck
 npm run lint
 npm test
+if git diff --cached --name-only | grep -q '^worker/'; then
+  npm run typecheck --prefix worker && npm test --prefix worker
+fi

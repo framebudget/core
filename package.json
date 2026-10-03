@@ -48,7 +48,8 @@
     "lint:fix": "node scripts/build-boot.mjs && eslint --fix .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy": "npm run build && npm run build --prefix docs && npm run deploy --prefix worker"
   },
   "peerDependencies": {
     "react": ">=18"

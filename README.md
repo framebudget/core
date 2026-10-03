@@ -222,6 +222,7 @@ configure({
 - **What is not sent.** No identifiers, cookies, URL, user agent or timestamps. Only sampled page views report.
 - **When.** One `navigator.sendBeacon` call when the page is hidden, after load.
 - **Never with Global Privacy Control or Save-Data.** Nothing is sent when `navigator.globalPrivacyControl` or Save-Data is on, checked again at send time. Nothing is sent while a tier is forced or a device is simulated.
+- **Letting visitors say no.** `configure({ share: null })` turns sharing off at any time, also after load: a report already armed for this page is not sent. Keep the visitor's choice yourself (for example in `localStorage`) and pass `share: null` on later visits.
 - **The browser still sends.** The beacon request carries what every request carries (the IP address and the `Origin` header). Handle it on your server accordingly.
 
 With `calibrationUrl`, framebudget fetches a calibration patch (JSON in the `calibration` format) at most once a day, after load, without credentials. It never blocks rendering, and the patch is applied from the next visit. The fetch follows the same rules as the report: it needs sharing to be enabled, and it is skipped under Global Privacy Control and Save-Data.
@@ -238,7 +239,7 @@ npm run format     # prettier
 npm run size       # minified and gzipped sizes per entry
 ```
 
-The library is the repository root. `docs/` is the landing page and API reference (a separate Vite project that links the library, see `docs/README.md`), `assets/brand/` holds the logo, fonts and tokens, and `assets/video/` the HyperFrames launch video.
+The library is the repository root. `docs/` is the landing page and API reference (a separate Vite project that links the library, see `docs/README.md`), `worker/` is the Cloudflare Worker that serves `docs/dist` and collects the site's reports (see `worker/README.md`), `assets/brand/` holds the logo, fonts and tokens, and `assets/video/` the HyperFrames launch video.
 
 A pre-commit hook (husky and lint-staged, installed by `npm install`) formats and lints the staged files, then runs the typecheck, the full lint and the tests.
 
