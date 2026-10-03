@@ -23,7 +23,9 @@ function createWorkspace(root) {
     name: "@framebudget/react",
     version: "0.2.1",
     dependencies: { "@framebudget/core": "0.2.1" },
+    // Optional, as in the real package: npm resolves required peers, which needs the registry.
     peerDependencies: { react: ">=18" },
+    peerDependenciesMeta: { react: { optional: true } },
   });
   writeJson(path.join(root, "packages/framebudget/package.json"), {
     name: "framebudget",
