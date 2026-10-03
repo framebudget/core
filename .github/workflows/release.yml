@@ -1,0 +1,171 @@
+# Runs when a release is published by hand on GitHub (tag vX.Y.Z, in order).
+#
+#   validate  tag format and order, bump warning, what shipped (library_changed)
+#   notes     release art, release body, changelog pull request (release/vX.Y.Z)
+#   publish   the library to GitHub Packages as @alysnnix/framebudget, only when it changed
+#   deploy    the website and the worker to Cloudflare, always
+name: Release
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  TAG: ${{ github.event.release.tag_name }}
+
+jobs:
+  validate:
+    name: Validate the tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      prerelease: ${{ steps.check.outputs.prerelease }}
+      library_changed: ${{ steps.check.outputs.library_changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Check the tag and classify the commits
+        id: check
+        run: node scripts/release/notes.mjs --tag "$TAG" --check
+
+  notes:
+    name: Release notes and changelog
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      VERSION: ${{ needs.validate.outputs.version }}
+      RELEASED_AT: ${{ github.event.release.published_at }}
+      BASE: ${{ github.event.repository.default_branch }}
+    steps:
+      # The changelog pull request builds on the default branch; the full history
+      # and tags are needed to find the previous release.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Write the changelog and the release notes
+        run: |
+          art_name="framebudget-$TAG.png"
+          echo "ART_NAME=$art_name" >> "$GITHUB_ENV"
+          echo "DATE=${RELEASED_AT:0:10}" >> "$GITHUB_ENV"
+          node scripts/release/notes.mjs --tag "$TAG" --date "${RELEASED_AT:0:10}" --out-dir "$RUNNER_TEMP/release" \
+            --art-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$art_name"
+      - name: Render the release art
+        run: |
+          node scripts/release/render-art.mjs --version "$VERSION" --date "$DATE" \
+            --notes "$RUNNER_TEMP/release/notes.json" --out "docs/public/releases/$TAG.png"
+          cp "docs/public/releases/$TAG.png" "$RUNNER_TEMP/$ART_NAME"
+      - name: Update the GitHub release
+        run: |
+          gh release upload "$TAG" "$RUNNER_TEMP/$ART_NAME" --clobber
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/release/release-body.md"
+      - name: Open the changelog pull request
+        run: |
+          branch="release/$TAG"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch"
+          git add CHANGELOG.md package.json package-lock.json "docs/public/releases/$TAG.png"
+          if git diff --cached --quiet; then
+            echo "Nothing to commit: $BASE already has the $TAG changelog."
+            exit 0
+          fi
+          body=$(printf -- '- prepend %s to CHANGELOG.md\n- set the package version to %s\n- add the release art at docs/public/releases/%s.png' \
+            "$TAG" "$VERSION" "$TAG")
+          git commit --message "chore(release): $TAG" --message "$body"
+          git push --force origin "$branch"
+          open_pr=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+          if [ -n "$open_pr" ]; then
+            gh pr edit "$open_pr" --body-file "$RUNNER_TEMP/release/pr-body.md"
+          else
+            gh pr create --base "$BASE" --head "$branch" --title "chore(release): $TAG" \
+              --body-file "$RUNNER_TEMP/release/pr-body.md"
+          fi
+
+  publish:
+    name: Publish to GitHub Packages
+    needs: validate
+    if: needs.validate.outputs.library_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      PRERELEASE: ${{ needs.validate.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: "@alysnnix"
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      # The package is `framebudget` in the repository; GitHub Packages needs the owner's scope.
+      - name: Scope the package for GitHub Packages
+        run: |
+          npm pkg set name=@alysnnix/framebudget version="$VERSION" \
+            publishConfig.registry=https://npm.pkg.github.com \
+            repository.type=git repository.url="git+https://github.com/$GITHUB_REPOSITORY.git"
+      - name: Publish
+        run: |
+          if [ "$PRERELEASE" = "true" ]; then dist_tag=next; else dist_tag=latest; fi
+          npm publish --tag "$dist_tag"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    name: Deploy to Cloudflare
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs/package-lock.json
+            worker/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm ci --prefix docs
+      - run: npm ci --prefix worker
+      - run: npm test --prefix worker
+      - run: npm run build --prefix docs
+      - name: Apply the D1 migrations
+        working-directory: worker
+        run: npx wrangler d1 migrations apply framebudget --remote
+      - name: Deploy the worker and the site
+        working-directory: worker
+        run: npx wrangler deploy
