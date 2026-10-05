@@ -11,6 +11,8 @@ import type { ChangeListener, ConfigureOptions, CreateBudgetOptions } from "./bu
 export interface BudgetState {
   readonly init: CreateBudgetOptions;
   readonly listeners: Set<ChangeListener>;
+  /** The site's calibration defaults, in the order they were configured; the fetched calibration refines them. */
+  readonly defaults: CalibrationPatch[];
   /** The site's calibration patches, in the order they were configured or registered. */
   readonly patches: CalibrationPatch[];
   readonly config: ConfigureOptions;

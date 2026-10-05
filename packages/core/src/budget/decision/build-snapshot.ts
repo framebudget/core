@@ -17,7 +17,7 @@ function deviceFields(
 ): Pick<BudgetSnapshot, "rawScore" | "source" | "simulated" | "hints" | "forced" | "calibration"> {
   const { context } = state;
   if (!context) {
-    const calibration = mergeCalibration(defaultCalibration, ...state.patches);
+    const calibration = mergeCalibration(defaultCalibration, ...state.defaults, ...state.patches);
     return { rawScore: state.score, source: state.source, simulated: null, hints: null, forced: null, calibration };
   }
   return {

@@ -6,6 +6,7 @@ export function createBudgetState(init: CreateBudgetOptions): BudgetState {
   return {
     init,
     listeners: new Set(),
+    defaults: [],
     patches: [],
     config: {},
     stepped: [],

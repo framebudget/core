@@ -18,8 +18,8 @@ declare const __FRAMEBUDGET_OPTIONS__: false | BootOptions;
 const scope = getScope();
 if (scope) {
   try {
-    const { calibration: calibrationPatch, coldMs = 0 } = __FRAMEBUDGET_OPTIONS__ || {};
-    const context = loadContext(scope, [calibrationPatch]);
+    const { calibrationDefaults, calibration, coldMs = 0 } = __FRAMEBUDGET_OPTIONS__ || {};
+    const context = loadContext(scope, [calibrationDefaults], [calibration]);
     const { simulated, stored } = context;
     // `|| COLD_MS` on a number: a zero or NaN budget also means the default.
     const first = initialScore(scope, context, coldMs || COLD_MS);

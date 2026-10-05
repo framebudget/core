@@ -8,7 +8,12 @@ import type { GovernorOptions } from "../governor/governor.types";
 import type { Scope } from "../platform/scope/scope.types";
 
 export interface ConfigureOptions {
-  /** Overrides part of the calibration (reference rates, thresholds, tiers, hysteresis). */
+  /**
+   * Your calibration values, below the calibration fetched from `share.calibrationUrl`:
+   * the fetched calibration refines them. Appended in order; same patch format as `calibration`.
+   */
+  calibrationDefaults?: CalibrationPatch;
+  /** Overrides part of the calibration (reference rates, thresholds, tiers, hysteresis). Wins over the fetched calibration. */
   calibration?: CalibrationPatch;
   /** Opt-in anonymous sharing. Off by default; `null` turns it off again. */
   share?: ShareOptions | null;

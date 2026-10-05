@@ -71,6 +71,9 @@ const head = `<script>${bootScript}</script>`;
 
 // With the same calibration you pass to configure(), so boot and core agree:
 const custom = `<script>${createBootScript({ calibration: { effects: { confetti: { threshold: 60, cost: 4, motion: true } } } })}</script>`;
+
+// The same goes for calibration defaults (see the calibration section):
+const tuned = `<script>${createBootScript({ calibrationDefaults: { effects: { parallax: { threshold: 80 } } } })}</script>`;
 ```
 
 The script is self-contained (about 10.3 KB minified, 4.3 KB gzipped), never throws, and works when any browser API is missing. With a Content Security Policy, add a nonce or the script's hash.
@@ -126,7 +129,7 @@ The hooks are also published on their own as `@framebudget/react`. During server
 | `budget.off("change", fn)` | Unsubscribes. |
 | `budget.reportFrame(gapMs, source?)` | Reports the time between two frames. See the governor section. |
 | `budget.register(name, definition)` | Adds an effect, or replaces one. |
-| `budget.configure(options)` / `configure(options)` | Calibration, governor and sharing options. Call it before the `load` event. |
+| `budget.configure(options)` / `configure(options)` | Calibration (`calibrationDefaults`, `calibration`), governor and sharing options. Call it before the `load` event. |
 | `budget.force(tier \| "auto")` | Forces a tier for the session. |
 | `budget.simulate(score \| null)` | Debug and demo only. See the section on simulating a device. |
 | `createBudget(options?)` | A separate instance, for tests or embedded widgets. |
@@ -234,7 +237,18 @@ configure({
 });
 ```
 
-The precedence is: built-in numbers, then a calibration fetched from your server (see below), then your overrides. Every value is validated, so a bad patch cannot break decisions. Changing `version` or the reference rates invalidates cached scores.
+The precedence is: built-in numbers, then your `calibrationDefaults`, then a calibration fetched from your server (see below), then your `calibration` overrides and `register()` definitions, in the order you call them. Every value is validated, so a bad patch cannot break decisions. Changing `version` or the reference rates invalidates cached scores.
+
+Use `calibrationDefaults` for your own starting values that the fetched calibration may refine, and `calibration` for values that must hold whatever your server sends:
+
+```ts
+configure({
+  calibrationDefaults: { effects: { parallax: { threshold: 80 } } }, // refined by calibrationUrl
+  calibration: { effects: { confetti: { threshold: 60, cost: 4 } } },  // always wins over it
+});
+```
+
+Each `configure()` call appends its patches in order and recomputes the decision. Pass the same `calibrationDefaults` and `calibration` to `createBootScript()`, so boot and core agree.
 
 ## Telemetry and privacy
 
@@ -259,7 +273,7 @@ configure({
 - **Letting visitors say no.** `configure({ share: null })` turns sharing off at any time, also after load: a report already armed for this page is not sent. Keep the visitor's choice yourself (for example in `localStorage`) and pass `share: null` on later visits.
 - **The browser still sends.** The beacon request carries what every request carries (the IP address and the `Origin` header). Handle it on your server accordingly.
 
-With `calibrationUrl`, framebudget fetches a calibration patch (JSON in the `calibration` format) at most once a day, after load, without credentials. It never blocks rendering, and the patch is applied from the next visit. The fetch follows the same rules as the report: it needs sharing to be enabled, and it is skipped under Global Privacy Control and Save-Data.
+With `calibrationUrl`, framebudget fetches a calibration patch (JSON in the `calibration` format) at most once a day, after load, without credentials. It never blocks rendering, and the patch is applied from the next visit. It refines your `calibrationDefaults` but never overrides your `calibration`, so ship the values your server should tune as defaults. The fetch follows the same rules as the report: it needs sharing to be enabled, and it is skipped under Global Privacy Control and Save-Data.
 
 ## Development
 
