@@ -2,6 +2,24 @@
 
 Every release of the framebudget library, newest first, split by package: `@framebudget/core`, `@framebudget/react` and `framebudget`. Releases up to 0.2.1 are split into the library and the website (framebudget.dev), which now has its own changelog in [framebudget/website](https://github.com/framebudget/website).
 
+## [0.4.0] - 2026-10-05
+
+### @framebudget/core
+
+#### Features
+
+- **core:** add calibration defaults ([4e8913f](https://github.com/framebudget/core/commit/4e8913fcf8e813c41f5a9920b5f7f3415ea888cb)) ([#15](https://github.com/framebudget/core/pull/15))
+
+### @framebudget/react
+
+No changes.
+
+### framebudget
+
+#### Features
+
+- **core:** add calibration defaults ([4e8913f](https://github.com/framebudget/core/commit/4e8913fcf8e813c41f5a9920b5f7f3415ea888cb)) ([#15](https://github.com/framebudget/core/pull/15))
+
 ## [0.3.0] - 2026-10-03
 
 ### @framebudget/core
