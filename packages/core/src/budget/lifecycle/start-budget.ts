@@ -24,7 +24,7 @@ export function startBudget(state: BudgetState, budget: Budget): void {
   state.scope = scope;
   if (!scope) return;
   state.now = createClock(scope);
-  const context = loadContext(scope, state.patches);
+  const context = loadContext(scope, state.defaults, state.patches);
   state.context = context;
   state.remote = context.stored.remote;
   state.learned = learnedBlocks(context.stored, context.calibration);

@@ -7,12 +7,14 @@ import { startSharing } from "../sharing/start-sharing";
 
 /** Options are stored before `start` so the first decision already uses them. */
 export function configureBudget(state: BudgetState, options: ConfigureOptions, start: () => void): void {
-  if (options.calibration) state.patches.push(options.calibration);
+  const { calibrationDefaults, calibration } = options;
+  if (calibrationDefaults) state.defaults.push(calibrationDefaults);
+  if (calibration) state.patches.push(calibration);
   if (options.share !== undefined) state.config.share = options.share;
   if (options.governor) state.config.governor = { ...state.config.governor, ...options.governor };
   if (options.panel !== undefined) state.config.panel = options.panel;
   start();
-  if (options.calibration) {
+  if (calibrationDefaults || calibration) {
     recalibrate(state);
     recomputeDecision(state, "configure");
   }
