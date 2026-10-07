@@ -5,7 +5,7 @@ import type { ShareOptions } from "../../../src/core/telemetry/telemetry.types";
 
 const DAY = 86_400_000;
 const REPORTED_AT = 1000 * DAY;
-const SHARE: ShareOptions = { endpoint: "https://collect.example/fb" };
+const SHARE: ShareOptions = {};
 const REPORTED: StoredState = { v: 1, blocked: {}, reportedAt: REPORTED_AT, reportedCal: "cal-1" };
 
 const isDueAfter = (days: number, share: ShareOptions = SHARE): boolean =>

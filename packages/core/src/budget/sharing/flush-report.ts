@@ -1,5 +1,5 @@
 import { buildReport } from "../../core/telemetry/build-report";
-import { isSharingAllowed } from "../../core/telemetry/is-sharing-allowed";
+import { allowedShare } from "../../core/telemetry/allowed-share";
 import { readHints } from "../../platform/hints/read-hints";
 import { sendReport } from "../../platform/telemetry/send-report";
 import type { StartContext } from "../../startup/startup.types";
@@ -20,8 +20,8 @@ export function flushReport(state: BudgetState): void {
   const { scope, context, decision } = state;
   if (!scope || !context || !decision || state.wasReported || state.score === null) return;
   const hints = readHints(scope); // GPC or Save-Data may have changed since load.
-  const share = state.config.share ?? undefined;
-  if (!isSharingAllowed(share, hints) || context.forced || context.simulated !== null) return;
+  const share = allowedShare(state.config.share, hints);
+  if (!share || context.forced || context.simulated !== null) return;
   const report = buildReport({
     calibration: context.calibration,
     score: decision.score,

@@ -1,6 +1,7 @@
 import type { ShareOptions } from "../../core/telemetry/telemetry.types";
+import { allowedShare } from "../../core/telemetry/allowed-share";
 import { isReportDue } from "../../core/telemetry/is-report-due";
-import { isSharingAllowed } from "../../core/telemetry/is-sharing-allowed";
+import { SHARE_CALIBRATION_URL } from "../../core/telemetry/telemetry.constants";
 import { safe } from "../../platform/scope/safe";
 import type { Scope } from "../../platform/scope/scope.types";
 import { DEFAULT_SAMPLE_RATE } from "../budget.constants";
@@ -29,13 +30,19 @@ function isSampled(state: BudgetState, share: ShareOptions): boolean {
   return random() < rate;
 }
 
+/** The site's own calibration source when it set one, framebudget.dev otherwise. */
+function calibrationUrl(share: ShareOptions): string {
+  const url = share.calibrationUrl;
+  return typeof url === "string" && url !== "" ? url : SHARE_CALIBRATION_URL;
+}
+
 /** Starts opt-in sharing after load: refreshes the calibration and arms the report for sampled page views. */
 export function startSharing(state: BudgetState): void {
   const { scope, context } = state;
   if (!scope || !context || !state.isLoaded) return;
-  const share = state.config.share ?? undefined;
-  if (!isSharingAllowed(share, context.hints)) return;
-  if (share.calibrationUrl) refreshRemoteCalibration(scope, context, share.calibrationUrl);
+  const share = allowedShare(state.config.share, context.hints);
+  if (!share) return;
+  refreshRemoteCalibration(scope, context, calibrationUrl(share));
   if (state.isSharingArmed) return;
   state.isSharingArmed = true;
   if (!isReportDue(share, context.stored, context.calibration.version, Date.now())) return;

@@ -38,6 +38,16 @@ describe("calibration fetch", () => {
     expect(next.budget.allows("parallax")).toBe(false);
   });
 
+  it("fetches from framebudget.dev by default, and from calibrationUrl when the site sets one", async () => {
+    const byDefault = fetcher();
+    await loadedPage({ fetch: byDefault.fetch }, true);
+    expect(byDefault.calls.map((call) => call.url)).toEqual(["https://framebudget.dev/api/calibration"]);
+
+    const own = fetcher();
+    await loadedPage({ fetch: own.fetch }, { ...SHARE, calibrationUrl: "https://collect.example/cal.json" });
+    expect(own.calls.map((call) => call.url)).toEqual(["https://collect.example/cal.json"]);
+  });
+
   it("fetches nothing without sharing, under Global Privacy Control, or under Save-Data", async () => {
     const fake = fetcher();
     const url = "https://collect.example/cal.json";
