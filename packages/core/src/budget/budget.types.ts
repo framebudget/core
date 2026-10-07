@@ -2,21 +2,24 @@ import type { BenchResult } from "../benchmark/benchmark.types";
 import type { Calibration, CalibrationPatch, EffectDefinition } from "../core/calibration/calibration.types";
 import type { OffReason } from "../core/decision/decision.types";
 import type { Hints, PressureState, ScoreSource } from "../core/device/device.types";
-import type { ShareOptions } from "../core/telemetry/telemetry.types";
+import type { ShareSetting } from "../core/telemetry/telemetry.types";
 import type { Tier } from "../core/tier/tier.enum";
 import type { GovernorOptions } from "../governor/governor.types";
 import type { Scope } from "../platform/scope/scope.types";
 
 export interface ConfigureOptions {
   /**
-   * Your calibration values, below the calibration fetched from `share.calibrationUrl`:
+   * Your calibration values, below the calibration fetched while sharing (framebudget.dev or `share.calibrationUrl`):
    * the fetched calibration refines them. Appended in order; same patch format as `calibration`.
    */
   calibrationDefaults?: CalibrationPatch;
   /** Overrides part of the calibration (reference rates, thresholds, tiers, hysteresis). Wins over the fetched calibration. */
   calibration?: CalibrationPatch;
-  /** Opt-in anonymous sharing. Off by default; `null` turns it off again. */
-  share?: ShareOptions | null;
+  /**
+   * Opt-in anonymous sharing. Off by default; `true` or an options object turns it on and
+   * sends sampled reports to framebudget.dev, `false` or `null` turns it off again.
+   */
+  share?: ShareSetting;
   /** Governor tuning. `auto: false` stops framebudget from sampling main-thread frames itself. */
   governor?: Partial<GovernorOptions> & { auto?: boolean };
   /** `false` ignores the `?framebudget` diagnostics panel parameter. */

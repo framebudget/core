@@ -11,7 +11,7 @@ At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page tr
 - Each effect has its own threshold with hysteresis, instead of one global tier.
 - A runtime governor watches real frame gaps and steps the most expensive effects down.
 - Local learning remembers which effects stuttered on this device. Nothing leaves the device.
-- Optional, anonymous telemetry is off by default and is enabled by the site developer, never by default.
+- Optional, anonymous telemetry is off by default and is enabled by the site developer, never by default. When enabled, reports go to framebudget.dev to calibrate framebudget on real devices.
 
 > The reference rates and thresholds are provisional. They come from one desktop Chrome measurement scaled down to stand for a mid-range phone, and they will change once they are calibrated on real devices.
 
@@ -237,13 +237,13 @@ configure({
 });
 ```
 
-The precedence is: built-in numbers, then your `calibrationDefaults`, then a calibration fetched from your server (see below), then your `calibration` overrides and `register()` definitions, in the order you call them. Every value is validated, so a bad patch cannot break decisions. Changing `version` or the reference rates invalidates cached scores.
+The precedence is: built-in numbers, then your `calibrationDefaults`, then the calibration fetched while sharing (see below), then your `calibration` overrides and `register()` definitions, in the order you call them. Every value is validated, so a bad patch cannot break decisions. Changing `version` or the reference rates invalidates cached scores.
 
-Use `calibrationDefaults` for your own starting values that the fetched calibration may refine, and `calibration` for values that must hold whatever your server sends:
+Use `calibrationDefaults` for your own starting values that the fetched calibration may refine, and `calibration` for values that must hold whatever the fetched calibration says:
 
 ```ts
 configure({
-  calibrationDefaults: { effects: { parallax: { threshold: 80 } } }, // refined by calibrationUrl
+  calibrationDefaults: { effects: { parallax: { threshold: 80 } } }, // refined by the fetched calibration
   calibration: { effects: { confetti: { threshold: 60, cost: 4 } } },  // always wins over it
 });
 ```
@@ -252,28 +252,33 @@ Each `configure()` call appends its patches in order and recomputes the decision
 
 ## Telemetry and privacy
 
-Sharing is **off by default**, and there is no default endpoint. Only the site developer can enable it:
+Sharing is **off by default**. Only the site developer can enable it. Once enabled, every sampled report goes to `https://framebudget.dev/api/report`, where reports from every site that shares calibrate framebudget on real devices. That destination is fixed: it cannot be changed or removed. You can add one endpoint of your own, which receives the same report:
 
 ```ts
+configure({ share: true }); // on, with every default
+
 configure({
   share: {
-    endpoint: "https://example.com/framebudget", // receives the report
-    sampleRate: 0.1,                              // share of page views that report (default 0.1)
-    minIntervalDays: 7,                           // days a browser waits before reporting again (default 7)
-    calibrationUrl: "https://example.com/framebudget/calibration.json", // optional
+    alsoSendTo: "https://example.com/framebudget", // optional: your own endpoint also receives the report
+    sampleRate: 0.1,                                // share of page views that report (default 0.1)
+    minIntervalDays: 7,                             // days a browser waits before reporting again (default 7)
+    calibrationUrl: "https://example.com/framebudget/calibration.json", // optional, default framebudget.dev
   },
 });
 ```
 
 - **What is sent.** The report contains the calibration version, the cold, warm and effective scores, the kernel rates, the clock resolution, hardware hints (cores, memory, pressure), the reduced-motion preference, the tier, the allowed effects, the effects stepped down, and the median fps per reported source. Numbers are rounded.
 - **What is not sent.** No identifiers, cookies, URL, user agent or timestamps. Only sampled page views report.
-- **When.** One `navigator.sendBeacon` call when the page is hidden, after load.
+- **When.** One `navigator.sendBeacon` call to framebudget.dev when the page is hidden, after load, and a second one to `alsoSendTo` when you set it.
 - **How often.** At most one report per browser every `minIntervalDays` days (default 7), so frequent visitors do not outweigh the rest. A new calibration version reports at once. The date of the last report is kept in the same `localStorage` entry as local learning; no identifier leaves the device. Browsers without storage cannot be throttled and report on every sampled page view.
 - **Never with Global Privacy Control or Save-Data.** Nothing is sent when `navigator.globalPrivacyControl` or Save-Data is on, checked again at send time. Nothing is sent while a tier is forced or a device is simulated.
-- **Letting visitors say no.** `configure({ share: null })` turns sharing off at any time, also after load: a report already armed for this page is not sent. Keep the visitor's choice yourself (for example in `localStorage`) and pass `share: null` on later visits.
-- **The browser still sends.** The beacon request carries what every request carries (the IP address and the `Origin` header). Handle it on your server accordingly.
+- **Letting visitors say no.** `configure({ share: null })` (or `false`) turns sharing off at any time, also after load: a report already armed for this page is not sent. Keep the visitor's choice yourself (for example in `localStorage`) and pass `share: null` on later visits.
+- **The browser still sends.** The beacon request carries what every request carries (the IP address, the user agent and the `Origin` header). framebudget.dev keeps only coarse facts derived from it (browser engine and major version, operating system family, mobile or not, country code) and never stores the IP address or the user agent string; see its [privacy page](https://framebudget.dev/privacy). Handle the request on your own server accordingly.
+- **Tell your visitors.** Your privacy policy should say that this anonymous report goes to framebudget.dev.
 
-With `calibrationUrl`, framebudget fetches a calibration patch (JSON in the `calibration` format) at most once a day, after load, without credentials. It never blocks rendering, and the patch is applied from the next visit. It refines your `calibrationDefaults` but never overrides your `calibration`, so ship the values your server should tune as defaults. The fetch follows the same rules as the report: it needs sharing to be enabled, and it is skipped under Global Privacy Control and Save-Data.
+While sharing, framebudget fetches a calibration patch (JSON in the `calibration` format) from `https://framebudget.dev/api/calibration`, or from `calibrationUrl` when you run your own calibration, at most once a day, after load, without credentials. That is how the shared reports improve decisions back. It never blocks rendering, and the patch is applied from the next visit. It refines your `calibrationDefaults` but never overrides your `calibration`, so ship the values the fetched calibration should tune as defaults. The fetch follows the same rules as the report: it needs sharing to be enabled, and it is skipped under Global Privacy Control and Save-Data.
+
+`share` changed in 0.5.0: `endpoint` is gone. Reports always go to framebudget.dev, and `alsoSendTo` adds your own endpoint. To keep sending to your server, rename `endpoint` to `alsoSendTo`.
 
 ## Development
 

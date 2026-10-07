@@ -55,7 +55,7 @@ describe("simulate across the session", () => {
   it("sends no telemetry while simulating", async () => {
     const browser = fakeBrowser();
     const budget = createBudget({ scope: browser.scope, random: () => 0, pause: () => Promise.resolve() });
-    budget.configure({ share: { endpoint: "https://collect.example/fb", sampleRate: 1 }, governor: { auto: false } });
+    budget.configure({ share: { sampleRate: 1 }, governor: { auto: false } });
     await browser.settle();
     budget.simulate(40);
     browser.fire("pagehide");

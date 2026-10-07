@@ -3,10 +3,13 @@ import type { Calibration, KernelName } from "../calibration/calibration.types";
 import type { Hints, PressureState } from "../device/device.types";
 import type { Tier } from "../tier/tier.enum";
 
-/** Opt-in sharing, set by the site developer. There is no default endpoint. */
+/**
+ * Opt-in sharing, set by the site developer. Once on, every sampled report goes to
+ * framebudget.dev (fixed, not configurable), which calibrates framebudget on real devices.
+ */
 export interface ShareOptions {
-  /** Receives one anonymous report per sampled page view, via navigator.sendBeacon. */
-  endpoint: string;
+  /** Your own endpoint: the same report also goes there, in a second navigator.sendBeacon call. */
+  alsoSendTo?: string;
   /** Fraction of page views that report, 0 to 1. Default 0.1. */
   sampleRate?: number;
   /**
@@ -15,9 +18,15 @@ export interface ShareOptions {
    * Kept in localStorage; no identifier leaves the device. Default 7, 0 turns it off.
    */
   minIntervalDays?: number;
-  /** JSON calibration patch fetched after load and used from the next visit. */
+  /**
+   * JSON calibration patch fetched after load and used from the next visit.
+   * Default https://framebudget.dev/api/calibration; set it to run your own calibration.
+   */
   calibrationUrl?: string;
 }
+
+/** `true` shares with every default, `false` or `null` turns sharing off. */
+export type ShareSetting = ShareOptions | boolean | null;
 
 /** The whole report. No identifiers, no URL, no user agent, no timestamps. */
 export interface TelemetryReport {

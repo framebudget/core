@@ -19,4 +19,4 @@ export type { GovernorOptions } from "./governor/governor.types";
 export type { BenchResult } from "./benchmark/benchmark.types";
 export type { Hints, PressureState, ScoreSource } from "./core/device/device.types";
 export type { OffReason } from "./core/decision/decision.types";
-export type { ShareOptions, TelemetryReport } from "./core/telemetry/telemetry.types";
+export type { ShareOptions, ShareSetting, TelemetryReport } from "./core/telemetry/telemetry.types";

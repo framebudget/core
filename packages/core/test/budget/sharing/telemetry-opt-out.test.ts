@@ -12,4 +12,11 @@ describe("telemetry opt-out", () => {
     browser.fire("pagehide");
     expect(browser.beacons).toHaveLength(1);
   });
+
+  it("sends nothing once the site turns sharing off with share: false, after load", async () => {
+    const { browser, budget } = await loadedPage({}, true);
+    budget.configure({ share: false });
+    browser.fire("pagehide");
+    expect(browser.beacons).toEqual([]);
+  });
 });
