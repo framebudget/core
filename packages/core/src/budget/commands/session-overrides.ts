@@ -25,6 +25,8 @@ export function simulateScore(state: BudgetState, value: number | null): void {
   if (!scope || !context) return;
   writeSimulatedScore(scope, value);
   context.simulated = value;
-  state.stepped.length = 0; // each simulated device starts fresh
+  // Each simulated device starts fresh: no step down, trial, retry or halt carries over.
+  state.stepped.length = 0;
+  Object.assign(state.steps, { trial: [], isHalted: false, retry: null, retried: [], hasRetryFailed: false });
   recomputeDecision(state, "simulate", true);
 }

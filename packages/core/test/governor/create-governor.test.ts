@@ -1,52 +1,65 @@
 import { describe, expect, it } from "vitest";
 import { harness } from "./governor-harness";
 
+/** Two of four frames miss a 60 Hz frame: more than the tolerated quarter. */
+const STUTTER = [16.7, 50, 16.7, 50];
+
 describe("governor", () => {
-  it("ignores frames during warm-up", () => {
+  it("does not judge windows that start during warm-up", () => {
     const governed = harness();
-    governed.frames(30, 33); // 990 ms of 30 fps, all inside the 1000 ms warm-up
+    governed.frames(28, 33); // 924 ms, inside the 1000 ms warm-up
+    expect(governed.verdicts).toEqual([]);
     expect(governed.strikeOuts).toEqual([]);
   });
 
-  it("steps down after consecutive bad windows, and a good window resets the strikes", () => {
+  it("strikes out on windows with too many late frames, and a good window resets the strikes", () => {
     const governed = harness();
     governed.clock.time = 1000;
-    governed.frames(8, 33); // two bad windows
+    governed.frames(4, 16.7);
+    for (const gap of [...STUTTER, ...STUTTER]) governed.frames(1, gap);
     governed.frames(4, 16.7); // good window resets
-    governed.frames(8, 33); // two bad windows
+    for (const gap of [...STUTTER, ...STUTTER]) governed.frames(1, gap);
     expect(governed.strikeOuts).toEqual([]);
-    governed.frames(4, 33); // third consecutive bad window
+    for (const gap of STUTTER) governed.frames(1, gap);
     expect(governed.strikeOuts).toEqual(["main"]);
   });
 
-  it("judges a window by its median, so one long frame is not a strike", () => {
+  it("tolerates one late frame in a window", () => {
     const governed = harness();
     governed.clock.time = 1000;
-    for (let index = 0; index < 3; index++) {
+    for (let window = 0; window < 3; window++) {
       governed.frames(3, 16.7);
-      governed.frames(1, 400);
+      governed.frames(1, 40); // late, but the window still runs over minFps
     }
     expect(governed.strikeOuts).toEqual([]);
+  });
+
+  it("strikes out on a steady rate under minFps", () => {
+    const governed = harness();
+    governed.clock.time = 1000;
+    governed.frames(12, 50); // 20 fps, never faster: no late frame, but too slow
+    expect(governed.strikeOuts).toEqual(["main"]);
   });
 
   it("keeps strikes per source and reports the source that struck out", () => {
     const governed = harness();
     governed.clock.time = 1000;
     for (let index = 0; index < 3; index++) {
-      governed.frames(4, 33, "worker");
+      governed.frames(4, 50, "worker");
       governed.frames(4, 16.7, "main");
     }
     expect(governed.strikeOuts).toEqual(["worker"]);
   });
 
-  it("waits a cooldown after a step down before judging again", () => {
+  it("does not judge windows that start in the cooldown after a step down", () => {
     const governed = harness();
     governed.clock.time = 1000;
-    governed.frames(12, 33);
+    governed.frames(12, 50);
     expect(governed.strikeOuts).toHaveLength(1);
-    governed.frames(12, 33); // 396 ms, inside the 500 ms cooldown
-    expect(governed.strikeOuts).toHaveLength(1);
-    governed.frames(16, 33); // the first frames still fall in the cooldown
+    const judged = governed.verdicts.length;
+    governed.frames(12, 50); // windows start at +50, +250, +450 ms: inside the 500 ms cooldown
+    expect(governed.verdicts).toHaveLength(judged);
+    governed.frames(12, 50);
     expect(governed.strikeOuts).toHaveLength(2);
   });
 });

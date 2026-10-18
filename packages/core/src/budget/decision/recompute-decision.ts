@@ -1,25 +1,15 @@
-import { decide } from "../../core/decision/decide";
 import type { Decision } from "../../core/decision/decision.types";
 import { applyToDocument } from "../../platform/document/apply-to-document";
 import type { StartContext } from "../../startup/startup.types";
 import type { ChangeReason } from "../budget.types";
 import type { BudgetState } from "../budget-state.types";
+import { decideForPage } from "./decide-for-page";
 import { emitChange } from "./emit-change";
 import { persistState } from "./persist-state";
 
 function decideAgain(state: BudgetState, context: StartContext, score: number): Decision {
   const previous = state.decision;
-  const isSimulated = context.simulated !== null;
-  return decide({
-    calibration: context.calibration,
-    score: context.simulated ?? score,
-    hints: context.hints,
-    pressure: state.pressure,
-    previous: previous ? previous.qualified : context.stored.qualified,
-    learned: isSimulated ? [] : state.learned, // a simulated device has no history
-    stepped: state.stepped,
-    forced: context.forced,
-  });
+  return decideForPage(state, context, score, previous ? previous.qualified : context.stored.qualified);
 }
 
 function hasDecisionChanged(previous: Decision, next: Decision): boolean {

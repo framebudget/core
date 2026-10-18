@@ -1,18 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { Budget, BudgetSnapshot } from "../../src/budget/budget.types";
-import type { StoredState } from "../../src/core/state/stored-state.types";
+import type { BudgetSnapshot } from "../../src/budget/budget.types";
 import { STORAGE_KEY } from "../../src/platform/storage/storage.constants";
 import { bootedPage } from "../support/booted-page";
-import type { FakeStorage } from "../support/fake-browser.types";
 import { createFakeStorage } from "../support/fake-storage";
-
-function smooth(budget: Budget): void {
-  for (let index = 0; index < 4; index++) budget.reportFrame(16.7);
-}
-
-function blocked(local: FakeStorage): StoredState["blocked"] {
-  return (JSON.parse(local.getItem(STORAGE_KEY)!) as StoredState).blocked;
-}
+import { smooth, stutter } from "../support/frames";
+import { stored } from "../support/stored";
 
 describe("learning across visits", () => {
   it("starts the next visit without the effect that stuttered, then retries it after clean visits", async () => {
@@ -20,8 +12,8 @@ describe("learning across visits", () => {
 
     const first = bootedPage(200, local);
     await first.browser.settle();
-    first.budget.reportFrame(40);
-    first.budget.reportFrame(40);
+    stutter(first.budget);
+    smooth(first.budget); // the step helped: it is learned
     expect(first.budget.snapshot().stepped).toEqual(["canvasHiRes"]);
 
     const visits: BudgetSnapshot[] = [];
@@ -29,7 +21,7 @@ describe("learning across visits", () => {
       const visit = bootedPage(200, local);
       await visit.browser.settle();
       visits.push(visit.budget.snapshot());
-      smooth(visit.budget);
+      smooth(visit.budget, 2);
     }
     for (const snapshot of visits) {
       expect(snapshot.off.canvasHiRes).toBe("learned");
@@ -39,17 +31,35 @@ describe("learning across visits", () => {
     const retry = bootedPage(200, local);
     await retry.browser.settle();
     expect(retry.budget.allows("canvasHiRes")).toBe(true);
-    smooth(retry.budget);
-    expect(blocked(local)).toEqual({});
+    smooth(retry.budget, 2);
+    expect(stored(local).blocked).toEqual({});
   });
 
-  it("does not count a visit as clean when the governor stepped something down", async () => {
+  it("makes no visit clean while a step down is in force", async () => {
     const local = createFakeStorage();
     const first = bootedPage(200, local);
     await first.browser.settle();
-    first.budget.reportFrame(40);
-    first.budget.reportFrame(40);
+    stutter(first.budget);
     smooth(first.budget);
-    expect(blocked(local)).toEqual({ canvasHiRes: { clean: 0, fails: 1 } });
+    expect(stored(local).blocked).toEqual({ canvasHiRes: { clean: 0, fails: 1 } });
+  });
+
+  it("counts a visit with a few bad windows as clean, and one with too many as not", async () => {
+    for (const [bad, clean] of [
+      [1, 1],
+      [2, 0],
+    ] as const) {
+      const local = createFakeStorage();
+      local.setItem(STORAGE_KEY, JSON.stringify({ v: 1, blocked: { blur: { clean: 0, fails: 1 } } }));
+      const visit = bootedPage(200, local);
+      visit.budget.configure({ governor: { strikes: 3, cleanWindows: 4 } });
+      await visit.browser.settle();
+      for (let index = 0; index < bad; index++) {
+        stutter(visit.budget);
+        smooth(visit.budget); // a good window clears the strikes
+      }
+      smooth(visit.budget, 4 - bad);
+      expect(stored(local).blocked.blur).toEqual({ clean, fails: 1 });
+    }
   });
 });

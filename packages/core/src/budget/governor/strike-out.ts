@@ -1,24 +1,55 @@
-import type { Calibration } from "../../core/calibration/calibration.types";
-import { recordStutter } from "../../core/learning/record-stutter";
+import type { Decision } from "../../core/decision/decision.types";
+import { pickVictim } from "../../core/step-down/pick-victim";
+import type { StepKind } from "../../governor/governor.types";
+import type { StartContext } from "../../startup/startup.types";
 import type { BudgetState } from "../budget-state.types";
 import { recomputeDecision } from "../decision/recompute-decision";
+import { confirmStep } from "./confirm-step";
+import { restartStretch } from "./step-state";
 
-/** The most expensive effect first; between equal costs, the one with the higher threshold. */
-function mostExpensive(calibration: Calibration, allowed: readonly string[]): string | undefined {
-  const cost = (name: string): number => calibration.effects[name]?.cost ?? 0;
-  const threshold = (name: string): number => calibration.effects[name]?.threshold ?? 0;
-  return [...allowed].sort((left, right) => cost(right) - cost(left) || threshold(right) - threshold(left))[0];
+/** Effects that may step down: the allowed ones the page uses, or every allowed one when the page reported no use. */
+function steppable(state: BudgetState, decision: Decision): string[] {
+  return state.used.size > 0 ? decision.effects.filter((name) => state.used.has(name)) : decision.effects;
 }
 
-/** Governor hook: `frameSource` struck out. Steps its own effect down, else the most expensive one. */
-export function strikeOut(state: BudgetState, frameSource: string): boolean {
-  const { context, decision } = state;
-  if (!context || !decision || context.forced) return false;
-  const allowed = decision.effects;
-  const victim = allowed.includes(frameSource) ? frameSource : mostExpensive(context.calibration, allowed);
-  if (!victim) return false;
+/** Riskiest first: the in-page retry, the explored effect, promoted effects, effects back after earlier stutters. */
+function suspects(state: BudgetState, context: StartContext, decision: Decision): string[][] {
+  return [
+    state.steps.retry === null ? [] : [state.steps.retry],
+    state.explored === null ? [] : [state.explored],
+    decision.promoted,
+    Object.keys(context.stored.blocked),
+  ];
+}
+
+/** Steps the likeliest used effect down on a guess, added to the trial. Returns false when none is left. */
+export function stepOnGuess(state: BudgetState): boolean {
+  const { context, decision, steps } = state;
+  if (!context || !decision) return false;
+  const victim = pickVictim(context.calibration, steppable(state, decision), suspects(state, context, decision));
+  if (victim === undefined) return false;
   state.stepped.push(victim);
-  if (context.simulated === null) context.stored = recordStutter(context.stored, victim); // recompute persists it
+  steps.trial.push(victim);
+  restartStretch(steps);
   recomputeDecision(state, "governor");
   return true;
+}
+
+/**
+ * Governor hook: `frameSource` struck out. An effect's own frames step that
+ * effect down for good; frames of an effect already off step nothing down.
+ * Other frames step the likeliest used effect down on a guess the governor
+ * then checks. Nothing steps down while a tier is forced, or after guesses
+ * that did not help.
+ */
+export function strikeOut(state: BudgetState, frameSource: string): StepKind | null {
+  const { context, decision, steps } = state;
+  if (!context || !decision || context.forced || steps.isHalted) return null;
+  if (!Object.keys(context.calibration.effects).includes(frameSource)) return stepOnGuess(state) ? "trial" : null;
+  if (!decision.effects.includes(frameSource)) return null;
+  state.stepped.push(frameSource);
+  restartStretch(steps);
+  confirmStep(state, frameSource);
+  recomputeDecision(state, "governor");
+  return "kept";
 }

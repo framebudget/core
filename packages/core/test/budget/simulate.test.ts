@@ -3,6 +3,7 @@ import type { ChangeReason } from "../../src/budget/budget.types";
 import { STORAGE_KEY } from "../../src/platform/storage/storage.constants";
 import { bootedPage } from "../support/booted-page";
 import { createFakeStorage } from "../support/fake-storage";
+import { smooth, stutter } from "../support/frames";
 import { sorted } from "../support/sorted";
 
 describe("simulate", () => {
@@ -52,14 +53,15 @@ describe("simulate", () => {
     const before = local.getItem(STORAGE_KEY);
 
     budget.simulate(150);
-    budget.reportFrame(40);
-    budget.reportFrame(40);
+    stutter(budget);
     expect(budget.snapshot().stepped).toEqual(["canvasHiRes"]);
-    for (let index = 0; index < 8; index++) budget.reportFrame(16.7); // would make a clean visit
+    smooth(budget, 4); // the step helps, is retried on the page, and the visit would be clean
     budget.simulate(50);
     expect(local.getItem(STORAGE_KEY)).toBe(before);
     expect(budget.snapshot().stepped).toEqual([]);
 
+    stutter(budget); // a fresh device: the step down above does not halt the governor here
+    expect(budget.snapshot().stepped).toHaveLength(1);
     budget.simulate(null);
     expect(budget.allows("canvasHiRes")).toBe(true);
   });

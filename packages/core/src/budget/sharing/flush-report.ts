@@ -4,7 +4,7 @@ import { readHints } from "../../platform/hints/read-hints";
 import { sendReport } from "../../platform/telemetry/send-report";
 import type { StartContext } from "../../startup/startup.types";
 import type { BudgetState } from "../budget-state.types";
-import { currentFps } from "../decision/current-fps";
+import { currentFps, currentLate, usedEffects } from "../decision/current-fps";
 import { persistState } from "../decision/persist-state";
 
 /** Records the beacon outcome; a queued report starts the interval, kept with its calibration for later visits. */
@@ -32,7 +32,10 @@ export function flushReport(state: BudgetState): void {
     tier: decision.tier,
     effects: decision.effects,
     stepped: state.stepped,
+    used: usedEffects(state, context.calibration.effects),
+    explored: state.explored,
     fps: currentFps(state),
+    late: currentLate(state),
   });
   recordReport(state, context, sendReport(scope, share, report));
 }

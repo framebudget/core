@@ -7,6 +7,7 @@ import { decide } from "../core/decision/decide";
 import { learnedBlocks } from "../core/learning/learned-blocks";
 import { applyToDocument } from "../platform/document/apply-to-document";
 import { getScope } from "../platform/scope/get-scope";
+import { initialRatios } from "../startup/initial-ratios";
 import { initialScore } from "../startup/initial-score";
 import { loadContext } from "../startup/load-context";
 import { COLD_MS } from "../startup/startup.constants";
@@ -26,6 +27,7 @@ if (scope) {
     const decision = decide({
       calibration: context.calibration,
       score: simulated ?? first.score,
+      ratios: simulated === null ? initialRatios(context, first) : undefined,
       hints: context.hints,
       previous: stored.qualified,
       learned: simulated === null ? learnedBlocks(stored, context.calibration) : [],

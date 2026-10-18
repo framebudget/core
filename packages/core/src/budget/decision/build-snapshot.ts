@@ -4,12 +4,20 @@ import type { Decision } from "../../core/decision/decision.types";
 import { Tier } from "../../core/tier/tier.enum";
 import type { BudgetSnapshot } from "../budget.types";
 import type { BudgetState } from "../budget-state.types";
-import { currentFps } from "./current-fps";
+import { currentFps, currentLate, usedEffects } from "./current-fps";
 
-function decisionFields(decision: Decision | null): Pick<BudgetSnapshot, "tier" | "effects" | "score" | "off"> {
+function decisionFields(
+  decision: Decision | null,
+): Pick<BudgetSnapshot, "tier" | "effects" | "score" | "off" | "promoted"> {
   return decision
-    ? { tier: decision.tier, effects: [...decision.effects], score: decision.score, off: { ...decision.off } }
-    : { tier: Tier.Lite, effects: [], score: null, off: {} };
+    ? {
+        tier: decision.tier,
+        effects: [...decision.effects],
+        score: decision.score,
+        off: { ...decision.off },
+        promoted: [...decision.promoted],
+      }
+    : { tier: Tier.Lite, effects: [], score: null, off: {}, promoted: [] };
 }
 
 function deviceFields(
@@ -49,7 +57,11 @@ export function buildSnapshot(state: BudgetState): BudgetSnapshot {
     off: decided.off,
     stepped: [...state.stepped],
     learned: [...state.learned],
+    used: usedEffects(state, device.calibration.effects),
+    promoted: decided.promoted,
+    explored: state.explored,
     fps: currentFps(state),
+    late: currentLate(state),
     calibration: device.calibration,
   };
 }

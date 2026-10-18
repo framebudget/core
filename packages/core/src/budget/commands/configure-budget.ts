@@ -5,19 +5,24 @@ import { recalibrate } from "../decision/recalibrate";
 import { recomputeDecision } from "../decision/recompute-decision";
 import { startSharing } from "../sharing/start-sharing";
 
+/** Keeps the options that only take effect when used: sharing, governor tuning, the panel, used effects. */
+function storeOptions(state: BudgetState, options: ConfigureOptions): void {
+  if (options.share !== undefined) state.config.share = options.share;
+  if (options.governor) state.config.governor = { ...state.config.governor, ...options.governor };
+  if (options.panel !== undefined) state.config.panel = options.panel;
+  const uses = options.uses ?? [];
+  for (const name of uses) state.used.add(name);
+}
+
 /** Options are stored before `start` so the first decision already uses them. */
 export function configureBudget(state: BudgetState, options: ConfigureOptions, start: () => void): void {
   const { calibrationDefaults, calibration } = options;
   if (calibrationDefaults) state.defaults.push(calibrationDefaults);
   if (calibration) state.patches.push(calibration);
-  if (options.share !== undefined) state.config.share = options.share;
-  if (options.governor) state.config.governor = { ...state.config.governor, ...options.governor };
-  if (options.panel !== undefined) state.config.panel = options.panel;
+  storeOptions(state, options);
   start();
-  if (calibrationDefaults || calibration) {
-    recalibrate(state);
-    recomputeDecision(state, "configure");
-  }
+  if (calibrationDefaults || calibration) recalibrate(state);
+  if (calibrationDefaults || calibration || options.uses) recomputeDecision(state, "configure");
   if (options.share) startSharing(state);
 }
 

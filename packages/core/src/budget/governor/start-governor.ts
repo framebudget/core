@@ -4,7 +4,8 @@ import type { GovernorOptions } from "../../governor/governor.types";
 import type { Scope } from "../../platform/scope/scope.types";
 import { INITIAL_SAMPLING_MS } from "../budget.constants";
 import type { BudgetState } from "../budget-state.types";
-import { markCleanVisit } from "./clean-visit";
+import { countWindow } from "./count-window";
+import { checkTrial } from "./check-trial";
 import { startFrameSampler } from "./frame-sampler";
 import { strikeOut } from "./strike-out";
 
@@ -13,8 +14,9 @@ export function startGovernor(state: BudgetState, scope: Scope): void {
   const options: GovernorOptions = { ...defaultGovernorOptions, ...tuning };
   state.governor = createGovernor(options, state.now, {
     strikeOut: (frameSource) => strikeOut(state, frameSource),
-    clean: () => {
-      markCleanVisit(state);
+    trialChecked: (hasHelped) => checkTrial(state, hasHelped),
+    judged: (isGood) => {
+      countWindow(state, options.cleanWindows, isGood);
     },
   });
   if (auto === false) return;

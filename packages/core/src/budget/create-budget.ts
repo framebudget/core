@@ -2,6 +2,7 @@ import { Tier } from "../core/tier/tier.enum";
 import type { Budget, CreateBudgetOptions } from "./budget.types";
 import { buildSnapshot } from "./decision/build-snapshot";
 import { configureBudget, registerEffect } from "./commands/configure-budget";
+import { isEffect, markUsed } from "./commands/mark-used";
 import { createBudgetState } from "./create-budget-state";
 import { assertSimulatedScore, forceTier, simulateScore } from "./commands/session-overrides";
 import { startBudget } from "./lifecycle/start-budget";
@@ -14,6 +15,7 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
   const budget: Budget = {
     allows(effect) {
       start();
+      if (state.context) markUsed(state, effect);
       return !!state.decision && state.decision.effects.includes(effect);
     },
     get tier() {
@@ -42,6 +44,9 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
     },
     reportFrame(gapMs, frameSource) {
       start();
+      if (frameSource !== undefined && !state.used.has(frameSource) && isEffect(state, frameSource)) {
+        markUsed(state, frameSource);
+      }
       state.governor?.report(gapMs, frameSource);
     },
     configure(options) {

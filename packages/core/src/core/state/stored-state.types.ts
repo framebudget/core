@@ -1,4 +1,4 @@
-import type { CalibrationPatch } from "../calibration/calibration.types";
+import type { CalibrationPatch, KernelRatios } from "../calibration/calibration.types";
 
 export interface BlockEntry {
   /** Clean visits since the last stutter. */
@@ -14,6 +14,8 @@ export interface StoredState {
   key?: string;
   /** Smoothed warm score from earlier pages. */
   score?: number;
+  /** Kernel ratios behind the smoothed score, for effects with kernel weights. */
+  ratios?: KernelRatios;
   /** Date.now() when the score was stored. */
   at?: number;
   /** Effects that passed their threshold on the last page, for hysteresis. */

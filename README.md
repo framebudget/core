@@ -9,8 +9,8 @@ At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page tr
 - A small inline boot script decides before the first paint, so an animation never starts only to freeze.
 - A fixed-time CPU benchmark gives a score where 100 is the reference phone.
 - Each effect has its own threshold with hysteresis, instead of one global tier.
-- A runtime governor watches real frame gaps and steps the most expensive effects down.
-- Local learning remembers which effects stuttered on this device. Nothing leaves the device.
+- A runtime governor counts late frames against the display's own cadence, steps down the effects the page actually uses, and turns a step back on when it did not help.
+- Local learning remembers which effects stuttered on this device, and forgives a passing hitch. Nothing leaves the device.
 - Optional, anonymous telemetry is off by default and is enabled by the site developer, never by default. When enabled, reports go to framebudget.dev to calibrate framebudget on real devices.
 
 > The reference rates and thresholds are provisional. They come from one desktop Chrome measurement scaled down to stand for a mid-range phone, and they will change once they are calibrated on real devices.
@@ -76,7 +76,7 @@ const custom = `<script>${createBootScript({ calibration: { effects: { confetti:
 const tuned = `<script>${createBootScript({ calibrationDefaults: { effects: { parallax: { threshold: 80 } } } })}</script>`;
 ```
 
-The script is self-contained (about 10.3 KB minified, 4.3 KB gzipped), never throws, and works when any browser API is missing. With a Content Security Policy, add a nonce or the script's hash.
+The script is self-contained (about 11.5 KB minified, 4.6 KB gzipped), never throws, and works when any browser API is missing. With a Content Security Policy, add a nonce or the script's hash.
 
 CSS can gate effects without any JavaScript:
 
@@ -120,16 +120,16 @@ The hooks are also published on their own as `@framebudget/react`. During server
 
 | Member | Description |
 | --- | --- |
-| `budget.allows(effect)` | May this effect run on this device? Unknown effects answer `false`. |
+| `budget.allows(effect)` | May this effect run on this device? Unknown effects answer `false`. Asking also marks the effect as used by the page (see the governor section). |
 | `budget.tier` | The current tier: `"Full"`, `"High"`, `"Medium"` or `"Lite"`. |
 | `budget.score` | Score after hardware caps and pressure, or `null` on the server. |
 | `budget.effects()` | The allowed effects. |
-| `budget.snapshot()` | Everything: scores, kernel rates, hints, the reason each effect is off, fps per source, calibration. |
-| `budget.on("change", fn)` | Calls `fn(snapshot, reason)`, and returns the unsubscribe function. Reasons: `warm`, `governor`, `pressure`, `motion`, `force`, `simulate`, `configure`. |
+| `budget.snapshot()` | Everything: scores, kernel rates, hints, the reason each effect is off, the effects the page used, fps and late frames per source, calibration. |
+| `budget.on("change", fn)` | Calls `fn(snapshot, reason)`, and returns the unsubscribe function. Reasons: `warm`, `governor`, `pressure`, `motion`, `force`, `simulate`, `configure`, `capacity`, `explore`. |
 | `budget.off("change", fn)` | Unsubscribes. |
 | `budget.reportFrame(gapMs, source?)` | Reports the time between two frames. See the governor section. |
 | `budget.register(name, definition)` | Adds an effect, or replaces one. |
-| `budget.configure(options)` / `configure(options)` | Calibration (`calibrationDefaults`, `calibration`), governor and sharing options. Call it before the `load` event. |
+| `budget.configure(options)` / `configure(options)` | Calibration (`calibrationDefaults`, `calibration`), governor, sharing and used-effect (`uses`) options. Call it before the `load` event. |
 | `budget.force(tier \| "auto")` | Forces a tier for the session. |
 | `budget.simulate(score \| null)` | Debug and demo only. See the section on simulating a device. |
 | `createBudget(options?)` | A separate instance, for tests or embedded widgets. |
@@ -160,6 +160,14 @@ budget.register("confetti", { threshold: 60, cost: 4, motion: true });
 Pass the same definitions to `createBootScript({ calibration: { effects } })` so the first paint already knows them.
 
 **Hysteresis.** Scores wander between page loads, so a device near a threshold could flip an effect on every visit. To prevent this, an effect that was on stays on down to `threshold * (1 - hysteresis)`, and an effect that was off turns on only from `threshold * (1 + hysteresis)`. The default margin is 10%. The previous state is kept across pages.
+
+**Kernel weights.** One score does not fit every effect: a blur leans on the GPU, a canvas on path building, a list animation on allocation. An effect can weigh the four benchmark kernels (`float`, `typed`, `alloc`, `path`): its score is then the weighted geometric mean of the kernel ratios (measured rate over reference rate), times 100, and its threshold applies to that score. Without weights an effect uses the device score. The weights are meant to come from the calibration script, which fits them on real reports:
+
+```ts
+configure({ calibration: { effects: { blur: { weights: { path: 0.7, typed: 0.3 } } } } });
+```
+
+**Capacity.** Thresholds judge each effect alone, as if the page ran every effect at once. With `calibration.capacity` above 0 the budget also counts what the page really runs: an effect's load is `cost * 100 / score` (its cost on the reference device, scaled by how slow this device is for it), and used effects that only miss their threshold run too while the load of the page's used effects stays within the capacity, lightest first. They do not change the tier, and they are the governor's first suspects. The default is 0 (off) until the calibration script proposes a value from real reports.
 
 ## Tiers
 
@@ -201,10 +209,18 @@ There are two runs. The cold run is in the boot script (1.6 ms of slices). The w
 
 ## The governor
 
-The governor starts at `load`. It ignores the first 3 s, then judges windows of 30 frames by their median gap. A window whose median is below the target (45 fps) is a strike. After 3 strikes in a row from one source, it steps down one effect, waits a 2 s cooldown, and emits `change`.
+The governor starts at `load`. Frames are grouped in windows of 30 per source; windows that start in the first 3 s, or in the 2 s cooldown after a change, are not judged.
 
-- Frames reported by `"main"` or `"worker"` step down the most expensive allowed effect (highest cost first, then highest threshold).
-- Frames reported with an effect's name step down that effect. Report your canvas loop as `budget.reportFrame(gap, "canvasHiRes")`.
+**Late frames, not a median.** A frame is late when it takes more than 1.5 frame times. The frame time is the display's own cadence (the fastest steady gaps seen on the page, the warm-up included) but never shorter than `1000 / targetFps` ms, so a 120 Hz screen is held to 60 fps (`targetFps`, default 60). A window is bad when more than 10% of its frames are late (`maxLateFraction`) or it runs under 40 fps (`minFps`), the rate at which every frame would be late on a 60 Hz screen. A median would miss a page that drops every other frame; counting late frames does not. After 3 bad windows in a row from one source, the governor steps one effect down and emits `change`.
+
+**What steps down.**
+
+- Frames reported with an effect's name step down that effect, for good. Report your canvas loop as `budget.reportFrame(gap, "canvasHiRes")`. Frames of an effect that is already off step nothing down.
+- Frames reported by `"main"` or `"worker"` step down the likeliest effect among the ones the page uses: first an effect turned back on for a retry, then the explored effect (see telemetry), then effects the capacity added, then effects that stuttered on earlier visits; within a group, the highest cost first, then the highest threshold. An effect is used once the page asked `allows()` for it, reported frames for it, or declared it with `configure({ uses: [...] })` (for effects gated only with CSS). Until the page reports any use, every allowed effect is a candidate.
+
+**Checking a guess.** A step down for `"main"` or `"worker"` frames is a guess, so the governor checks it on the next 3 windows of the same source. It helped when one of them is good or the frame rate rose by 15% since before the step; then it stays and is learned. If not, one more used effect steps down and the check runs again against the same starting rate, since one effect alone may not move a frame past a vsync; up to 3 guesses. When they still do not help, they all come back on, nothing is learned, and nothing more steps down on this page: the stutter comes from something else (the site's own code, another tab), and taking effects away would not fix it. This is also what keeps a phone whose browser caps animation frames at 30 Hz (a power-saving mode) from losing its effects: its steady 30 fps leads to a few guesses, they do not raise the rate, and the effects come back seconds later.
+
+**Retrying on the page.** After 8 judged windows (`cleanWindows`), mostly good, with no check running, the oldest effect stepped down on this page comes back on once. If it holds for another such stretch, the stutter is forgotten, so one hitch (a garbage collection, a hydration burst) does not cost the effect for the next visits. If it stutters again, it is the first suspect and stays off, and no other effect is retried on this page: the stutter was real.
 
 framebudget samples main-thread frames by itself with `requestAnimationFrame`. It samples for the first seconds and while the user interacts (scroll, pointer, keys), not forever. Use `configure({ governor: { auto: false } })` to report frames yourself only. Workers post their gaps to the page:
 
@@ -217,15 +233,15 @@ worker.addEventListener("message", (e) => {
 });
 ```
 
-You can tune `targetFps`, `windowFrames`, `strikes`, `warmupMs`, `cooldownMs`, `cleanWindows` and `maxGapMs` with `configure({ governor })`.
+You can tune `targetFps`, `minFps`, `maxLateFraction`, `windowFrames`, `strikes`, `warmupMs`, `cooldownMs`, `cleanWindows` and `maxGapMs` with `configure({ governor })`. `budget.snapshot().fps` and `.late` give the frame rate and the share of late frames per source over its recent windows.
 
 ## Local learning
 
-Local learning is always on and stays on the device: one `localStorage` entry per origin, with access guarded. When the governor steps an effect down, that effect is remembered and the next visits start without it. After 5 clean visits (visits with enough smooth frames and no step down), the effect is tried again. If it holds up, it is forgotten. If it stutters again, the wait doubles. The cached warm score and the effects that passed their thresholds on the last page are stored in the same entry.
+Local learning is always on and stays on the device: one `localStorage` entry per origin, with access guarded. When a step down stays (see the governor section), that effect is remembered and the next visits start without it. After 5 clean visits, the effect is tried again. If it holds up, it is forgotten. If it stutters again, the wait doubles. A visit is clean when at least 8 windows were judged, 80% of them good, and no effect is stepped down; a few bad windows, from a slow scroll or a busy moment, do not spoil it. The cached warm score, its kernel ratios and the effects that passed their thresholds on the last page are stored in the same entry.
 
 ## Calibration
 
-All numbers that turn measurements into decisions live in one object, `defaultCalibration`: reference rates (warm and cold), effect thresholds and costs, tier floors, hysteresis, hardware caps, pressure factors, the fallback score, the maximum age of a cached score, and the number of clean visits before a retry. Override any part of it:
+All numbers that turn measurements into decisions live in one object, `defaultCalibration`: reference rates (warm and cold), effect thresholds, costs and kernel weights, tier floors, hysteresis, hardware caps, pressure factors, the fallback score, the maximum age of a cached score, the number of clean visits before a retry, and the capacity. Override any part of it:
 
 ```ts
 configure({
@@ -263,11 +279,13 @@ configure({
     sampleRate: 0.1,                                // share of page views that report (default 0.1)
     minIntervalDays: 7,                             // days a browser waits before reporting again (default 7)
     calibrationUrl: "https://example.com/framebudget/calibration.json", // optional, default framebudget.dev
+    explore: 0.2,                                   // share of reporting page views that explore (default 0)
   },
 });
 ```
 
-- **What is sent.** The report contains the calibration version, the cold, warm and effective scores, the kernel rates, the clock resolution, hardware hints (cores, memory, pressure), the reduced-motion preference, the tier, the allowed effects, the effects stepped down, and the median fps per reported source. Numbers are rounded.
+- **What is sent.** The report (version 2) contains the calibration version, the cold, warm and effective scores, the kernel rates, the clock resolution, hardware hints (cores, memory, pressure), the reduced-motion preference, the tier, the allowed effects, the effects the page used, the effects stepped down, the explored effect, and the frame rate and share of late frames per reported source. Numbers are rounded.
+- **Exploring below thresholds.** An effect never runs below its threshold, so reports alone cannot tell whether a threshold is too strict. With `explore`, that share of the reporting page views turns on one used effect whose score is within 25% under its threshold, picked at random, and names it in the report. The governor still steps it down if it stutters (it is the first suspect), and nothing is learned from it. Off by default.
 - **What is not sent.** No identifiers, cookies, URL, user agent or timestamps. Only sampled page views report.
 - **When.** One `navigator.sendBeacon` call to framebudget.dev when the page is hidden, after load, and a second one to `alsoSendTo` when you set it.
 - **How often.** At most one report per browser every `minIntervalDays` days (default 7), so frequent visitors do not outweigh the rest. A new calibration version reports at once. The date of the last report is kept in the same `localStorage` entry as local learning; no identifier leaves the device. Browsers without storage cannot be throttled and report on every sampled page view.

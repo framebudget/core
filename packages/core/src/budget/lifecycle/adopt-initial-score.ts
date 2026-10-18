@@ -1,6 +1,7 @@
 import { safe } from "../../platform/scope/safe";
 import type { BootState, Scope } from "../../platform/scope/scope.types";
 import { COLD_MS } from "../../startup/startup.constants";
+import { initialRatios } from "../../startup/initial-ratios";
 import { initialScore } from "../../startup/initial-score";
 import type { StartContext } from "../../startup/startup.types";
 import type { BudgetState, StartingPoint } from "../budget-state.types";
@@ -18,11 +19,13 @@ export function adoptInitialScore(state: BudgetState, scope: Scope, context: Sta
     state.score = boot.score;
     state.source = boot.source;
     state.cold = boot.cold;
+    state.ratios = initialRatios(context, boot);
     return { score: boot.score, qualified: boot.qualified };
   }
   const first = initialScore(scope, context, COLD_MS);
   state.score = first.score;
   state.source = first.source;
   state.cold = first.cold;
+  state.ratios = initialRatios(context, first);
   return { score: first.score, qualified: context.stored.qualified };
 }

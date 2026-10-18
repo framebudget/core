@@ -15,7 +15,7 @@ function roundedRates(bench: BenchResult | null): Partial<Record<KernelName, num
 export function buildReport(input: ReportInput): TelemetryReport {
   const bench = input.warm ?? input.cold;
   return {
-    v: 1,
+    v: 2,
     cal: input.calibration.version,
     score: Math.round(input.score),
     cold: input.cold ? Math.round(input.cold.score) : null,
@@ -30,7 +30,10 @@ export function buildReport(input: ReportInput): TelemetryReport {
     },
     tier: input.tier,
     effects: [...input.effects].sort(byCodeUnits),
+    used: [...input.used].sort(byCodeUnits),
     stepped: [...input.stepped],
+    explored: input.explored,
     fps: fromEntries(Object.entries(input.fps).map(([name, value]) => [name, Math.round(value)])),
+    late: fromEntries(Object.entries(input.late).map(([name, value]) => [name, Math.round(value * 100) / 100])),
   };
 }

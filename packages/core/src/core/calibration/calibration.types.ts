@@ -2,16 +2,25 @@ import type { Tier } from "../tier/tier.enum";
 
 export type KernelName = "float" | "typed" | "alloc" | "path";
 
+/** Measured rate over reference rate, per kernel: 1 is the reference device. */
+export type KernelRatios = Partial<Record<KernelName, number>>;
+
 /** One effect in the registry. */
 export interface EffectDefinition {
   /** Score (100 = reference device) the device needs for the effect to run. */
   threshold: number;
-  /** Relative frame cost. The governor steps the most expensive effect down first. */
+  /** Relative frame cost on the reference device. The governor steps the most expensive effect down first. */
   cost: number;
   /** Turned off under `prefers-reduced-motion: reduce`. */
   motion?: boolean;
   /** Turned off under Save-Data or a 2g connection. */
   data?: boolean;
+  /**
+   * Relative weight of each benchmark kernel in this effect's score. The
+   * effect's score is the weighted geometric mean of the kernel ratios, times
+   * 100. Without weights the effect uses the device score. Fitted offline from reports.
+   */
+  weights?: Partial<Record<KernelName, number>>;
 }
 
 /**
@@ -53,6 +62,12 @@ export interface Calibration {
   scoreMaxAgeDays: number;
   /** Clean visits before an effect that stuttered is tried again (doubles after each new stutter). */
   retryVisits: number;
+  /**
+   * Frame budget for the effects a page uses, in cost units. An effect's load
+   * is `cost * 100 / score`. When above 0, used effects that only miss their
+   * threshold also run while the load of the page's used effects fits. 0 turns it off.
+   */
+  capacity: number;
 }
 
 type Patch<T> = { [K in keyof T]?: T[K] extends object ? Partial<T[K]> : T[K] };
