@@ -5,6 +5,7 @@ import type { BudgetState, StepState } from "./budget-state.types";
 export function createStepState(): StepState {
   return {
     trial: [],
+    trialSource: null,
     isHalted: false,
     recorded: {},
     retry: null,

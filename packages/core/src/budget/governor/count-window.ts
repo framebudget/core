@@ -2,7 +2,7 @@ import { recordCleanVisit } from "../../core/learning/record-clean-visit";
 import type { BudgetState } from "../budget-state.types";
 import { pageUses } from "../decision/current-fps";
 import { persistState } from "../decision/persist-state";
-import { settleStretch } from "./in-page-retry";
+import { abandonRetry, settleStretch } from "./in-page-retry";
 
 /** Share of good windows that makes a stretch smooth. A few bad windows (a hitch, a slow scroll) do not spoil it. */
 const SMOOTH_SHARE = 0.8;
@@ -22,11 +22,19 @@ function markCleanVisit(state: BudgetState): void {
   persistState(state);
 }
 
+/** A smooth stretch settles a retry or starts one; a retry with no verdict after twice the stretch steps back down. */
+function closeStretch(state: BudgetState, cleanWindows: number): boolean {
+  const { steps } = state;
+  return isSmooth(steps.recentJudged, steps.recentGood, cleanWindows)
+    ? settleStretch(state)
+    : steps.recentJudged >= 2 * cleanWindows && abandonRetry(state);
+}
+
 /**
- * Governor hook: a window was judged. Outside a check, a smooth stretch
- * settles an in-page retry, and a visit with enough smooth windows, no effect
- * stepped down and no retry pending is clean, once. Returns true when a retry
- * turned an effect back on.
+ * Governor hook: a window was judged. Outside a check, a stretch may settle,
+ * start or end an in-page retry, and a visit with enough smooth windows, no
+ * effect stepped down and no retry pending is clean, once. Returns true when
+ * the effects changed.
  */
 export function countWindow(state: BudgetState, cleanWindows: number, isGood: boolean): boolean {
   const { steps } = state;
@@ -37,7 +45,7 @@ export function countWindow(state: BudgetState, cleanWindows: number, isGood: bo
     steps.recentGood += 1;
   }
   if (steps.trial.length > 0) return false;
-  const hasRetried = isSmooth(steps.recentJudged, steps.recentGood, cleanWindows) && settleStretch(state);
+  const hasRetried = closeStretch(state, cleanWindows);
   const isPending = steps.retry !== null || state.stepped.length > 0;
   const isClean = !isPending && isSmooth(steps.judged, steps.good, cleanWindows);
   if (!isClean || steps.isCleanMarked) return hasRetried;

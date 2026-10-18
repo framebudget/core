@@ -29,7 +29,7 @@ export function pageInput(
 /**
  * The thresholds' decision, widened by the capacity and the explored effect.
  * A forced tier stays exactly its set. An explored effect that now passes its
- * threshold on its own is no longer explored.
+ * threshold on its own, on the real device, is no longer explored.
  */
 export function decideForPage(
   state: BudgetState,
@@ -39,7 +39,8 @@ export function decideForPage(
 ): Decision {
   const input = pageInput(state, context, score, previous);
   const decision = decide(input);
-  if (state.explored !== null && decision.qualified.includes(state.explored)) state.explored = null;
+  const isReal = !context.forced && context.simulated === null;
+  if (isReal && state.explored !== null && decision.qualified.includes(state.explored)) state.explored = null;
   return context.forced
     ? decision
     : widenDecision({ ...input, used: pageUses(state), explored: state.explored }, decision);

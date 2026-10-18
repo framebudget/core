@@ -17,6 +17,17 @@ describe("explored effect and report step-downs", () => {
     expect((JSON.parse(browser.beacons[0]!.body) as TelemetryReport).explored).toBeNull();
   });
 
+  it("keeps exploring through a forced tier", async () => {
+    const { browser, budget } = bootedPage(60);
+    await browser.settle();
+    budget.allows("parallax");
+    budget.configure({ share: { ...SHARE, explore: 1 } });
+    budget.force("Full");
+    budget.force("auto");
+    expect(budget.snapshot().explored).toBe("parallax");
+    expect(budget.allows("parallax")).toBe(true);
+  });
+
   it("leaves guesses still being checked out of the report's step-downs", async () => {
     const { browser, budget } = bootedPage(200);
     await browser.settle();

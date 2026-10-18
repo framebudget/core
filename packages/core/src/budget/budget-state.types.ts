@@ -52,7 +52,9 @@ export interface BudgetState {
 export interface StepState {
   /** Effects stepped down on a guess, in order, until the governor has checked them. Empty: no trial. */
   trial: string[];
-  /** Guesses that did not help: the stutter is not the effects', so nothing more steps down on this page. */
+  /** The frame source whose strike-out started the guesses. */
+  trialSource: string | null;
+  /** Guesses that did not help: the stutter is not the effects', so no more guesses on this page. */
   isHalted: boolean;
   /** Effects whose stutter this page recorded, with their block before it (null: none). */
   recorded: Record<string, BlockEntry | null>;

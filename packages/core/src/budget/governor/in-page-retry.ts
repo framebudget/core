@@ -47,3 +47,21 @@ export function settleStretch(state: BudgetState): boolean {
   recomputeDecision(state, "governor");
   return true;
 }
+
+/**
+ * A retry with no verdict after twice the stretch it needed (frames neither
+ * smooth enough to forgive nor bad enough to strike out): it did not hold, so
+ * the effect steps back down with its block, and nothing else is retried.
+ * Returns true when it did.
+ */
+export function abandonRetry(state: BudgetState): boolean {
+  const { steps } = state;
+  const name = steps.retry;
+  if (name === null) return false;
+  steps.retry = null;
+  steps.hasRetryFailed = true;
+  restartStretch(steps);
+  state.stepped.push(name);
+  recomputeDecision(state, "governor");
+  return true;
+}

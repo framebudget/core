@@ -48,7 +48,9 @@ export function strikeOut(state: BudgetState, frameSource: string): StepKind | n
   const { context, decision, steps } = state;
   if (!context || !decision || context.forced) return null;
   if (!Object.keys(context.calibration.effects).includes(frameSource)) {
-    return !steps.isHalted && stepOnGuess(state) ? "trial" : null;
+    if (steps.isHalted || !stepOnGuess(state)) return null;
+    steps.trialSource = frameSource;
+    return "trial";
   }
   if (!decision.effects.includes(frameSource)) return null;
   state.stepped.push(frameSource);

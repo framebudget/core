@@ -14,8 +14,8 @@ function recordFrame(state: BudgetState, scope: Scope, sampler: FrameSampler, ti
 
 /**
  * Main-thread frames are sampled while the page is busy (start, interaction),
- * not forever, but always until a guess or a retry has its verdict: a check
- * left open would keep an effect off, or blocked, for no reason.
+ * not forever, but always until a guess made for main-thread frames has its
+ * verdict: a check left open would keep an effect off for no reason.
  */
 export function startFrameSampler(state: BudgetState, scope: Scope, initialMs: number): void {
   const requestFrame = safe(() => scope.requestAnimationFrame?.bind(scope));
@@ -23,7 +23,7 @@ export function startFrameSampler(state: BudgetState, scope: Scope, initialMs: n
   const sampler: FrameSampler = { lastFrame: 0, sampleUntil: 0, isRunning: false };
   const onFrame = (time: number): void => {
     recordFrame(state, scope, sampler, time);
-    const isChecking = state.steps.trial.length > 0 || state.steps.retry !== null;
+    const isChecking = state.steps.trialSource === "main";
     if (isChecking || state.now() < sampler.sampleUntil) {
       requestFrame(onFrame);
       return;

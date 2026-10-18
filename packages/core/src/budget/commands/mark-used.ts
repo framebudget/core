@@ -7,11 +7,13 @@ export function isEffect(state: BudgetState, name: string): boolean {
 }
 
 /**
- * With a capacity, used effects can let more effects run, so the decision is
- * made again once the current task's synchronous work ends: never inside
- * allows(), which React calls while rendering.
+ * Records that the page uses an effect. With a capacity, a new use can let
+ * more effects run, so the decision is made again once the current task's
+ * synchronous work ends: never inside allows(), which React calls while rendering.
  */
-export function scheduleCapacity(state: BudgetState): void {
+export function markUsed(state: BudgetState, name: string): void {
+  if (state.used.has(name)) return;
+  state.used.add(name);
   const capacity = state.context?.calibration.capacity ?? 0;
   if (!(capacity > 0) || state.isCapacityPending) return;
   state.isCapacityPending = true;
@@ -19,11 +21,4 @@ export function scheduleCapacity(state: BudgetState): void {
     state.isCapacityPending = false;
     recomputeDecision(state, "capacity");
   });
-}
-
-/** Records that the page uses an effect. */
-export function markUsed(state: BudgetState, name: string): void {
-  if (state.used.has(name)) return;
-  state.used.add(name);
-  scheduleCapacity(state);
 }

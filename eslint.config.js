@@ -157,7 +157,16 @@ export default defineConfig(
       "unicorn/consistent-boolean-name": [
         "error",
         {
-          ignore: ["^useBudget$", "^sendReport$", "^stepOnGuess$", "^checkTrial$", "^countWindow$", "^settleStretch$"],
+          ignore: [
+            "^useBudget$",
+            "^sendReport$",
+            "^stepOnGuess$",
+            "^checkTrial$",
+            "^countWindow$",
+            "^settleStretch$",
+            "^abandonRetry$",
+            "^closeStretch$",
+          ],
         },
       ],
       // The public API returns null for "not measured"; null is part of the contract.

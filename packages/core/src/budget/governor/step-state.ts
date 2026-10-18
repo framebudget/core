@@ -21,6 +21,7 @@ export function dropChecks(state: BudgetState): void {
   const { steps } = state;
   for (const name of steps.trial) unstep(state.stepped, name);
   steps.trial = [];
+  steps.trialSource = null;
   steps.retry = null;
   restartStretch(steps);
   state.governor?.reset();
