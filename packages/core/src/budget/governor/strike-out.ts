@@ -8,27 +8,29 @@ import { recomputeDecision } from "../decision/recompute-decision";
 import { confirmStep } from "./confirm-step";
 import { restartStretch } from "./step-state";
 
-/** Effects that may step down: the allowed ones the page uses, or every allowed one when the page reported no use. */
-function steppable(state: BudgetState, decision: Decision): string[] {
-  const uses = pageUses(state);
-  return uses.length > 0 ? decision.effects.filter((name) => uses.includes(name)) : decision.effects;
-}
-
-/** Riskiest first: the in-page retry, the explored effect, promoted effects, effects back after earlier stutters. */
+/**
+ * Riskiest first: the in-page retry, the explored effect, promoted effects,
+ * used effects back after earlier stutters, then the other used effects. The
+ * allowed effects the page never reported come last: an effect gated only in
+ * CSS still runs. Without any use reported, every allowed effect counts as used.
+ */
 function suspects(state: BudgetState, context: StartContext, decision: Decision): string[][] {
+  const reported = pageUses(state);
+  const uses = reported.length > 0 ? reported : decision.effects;
   return [
     state.steps.retry === null ? [] : [state.steps.retry],
     state.explored === null ? [] : [state.explored],
     decision.promoted,
-    Object.keys(context.stored.blocked),
+    Object.keys(context.stored.blocked).filter((name) => uses.includes(name)),
+    uses,
   ];
 }
 
-/** Steps the likeliest used effect down on a guess, added to the trial. Returns false when none is left. */
+/** Steps the likeliest allowed effect down on a guess, added to the trial. Returns false when none is left. */
 export function stepOnGuess(state: BudgetState): boolean {
   const { context, decision, steps } = state;
   if (!context || !decision || context.forced) return false;
-  const victim = pickVictim(context.calibration, steppable(state, decision), suspects(state, context, decision));
+  const victim = pickVictim(context.calibration, decision.effects, suspects(state, context, decision));
   if (victim === undefined) return false;
   state.stepped.push(victim);
   steps.trial.push(victim);
