@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { ChangeReason } from "../../src/budget/budget.types";
-import type { TelemetryReport } from "../../src/core/telemetry/telemetry.types";
-import { bootedPage } from "../support/booted-page";
-import { smooth, stutter } from "../support/frames";
-import { stored } from "../support/stored";
-import { SHARE } from "./loaded-page";
+import type { ChangeReason } from "../../../src/budget/budget.types";
+import type { TelemetryReport } from "../../../src/core/telemetry/telemetry.types";
+import { bootedPage } from "../../support/booted-page";
+import { smooth, stutter } from "../../support/frames";
+import { stored } from "../../support/stored";
+import { SHARE } from "../loaded-page";
 
 describe("capacity in the budget", () => {
   it("lets a newly used effect run once the current task ends, when the page's load fits", async () => {

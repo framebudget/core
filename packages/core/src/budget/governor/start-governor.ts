@@ -15,9 +15,7 @@ export function startGovernor(state: BudgetState, scope: Scope): void {
   state.governor = createGovernor(options, state.now, {
     strikeOut: (frameSource) => strikeOut(state, frameSource),
     trialChecked: (hasHelped) => checkTrial(state, hasHelped),
-    judged: (isGood) => {
-      countWindow(state, options.cleanWindows, isGood);
-    },
+    judged: (isGood) => countWindow(state, options.cleanWindows, isGood),
   });
   if (auto === false) return;
   startFrameSampler(state, scope, options.warmupMs + INITIAL_SAMPLING_MS);

@@ -10,7 +10,10 @@ export function currentLate(state: BudgetState): Record<string, number> {
   return state.governor ? state.governor.late() : {};
 }
 
-/** The used effects that are effects of the calibration, in registry order. */
-export function usedEffects(state: BudgetState, effects: Readonly<Record<string, unknown>>): string[] {
-  return Object.keys(effects).filter((name) => state.used.has(name));
+/**
+ * The effects the page used that the calibration knows, in registry order.
+ * Unknown names (a typo, an effect registered later) do not count.
+ */
+export function pageUses(state: BudgetState): string[] {
+  return Object.keys(state.context?.calibration.effects ?? {}).filter((name) => state.used.has(name));
 }

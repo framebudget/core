@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { BudgetSnapshot } from "../../src/budget/budget.types";
-import { STORAGE_KEY } from "../../src/platform/storage/storage.constants";
-import { bootedPage } from "../support/booted-page";
-import { createFakeStorage } from "../support/fake-storage";
-import { smooth, stutter } from "../support/frames";
-import { stored } from "../support/stored";
+import type { BudgetSnapshot } from "../../../src/budget/budget.types";
+import { STORAGE_KEY } from "../../../src/platform/storage/storage.constants";
+import { bootedPage } from "../../support/booted-page";
+import { createFakeStorage } from "../../support/fake-storage";
+import { smooth, stutter } from "../../support/frames";
+import { stored } from "../../support/stored";
 
 describe("learning across visits", () => {
   it("starts the next visit without the effect that stuttered, then retries it after clean visits", async () => {

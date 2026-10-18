@@ -53,7 +53,7 @@ export interface TelemetryReport {
   effects: string[];
   /** Effects the page used: asked with allows(), reported frames for, or declared with `uses`. */
   used: string[];
-  /** Effects the governor stepped down on this page and that are still off. */
+  /** Effects the governor stepped down for good on this page and that are still off; guesses being checked are left out. */
   stepped: string[];
   /** Effect this page view explored below its threshold, or null. */
   explored: string | null;

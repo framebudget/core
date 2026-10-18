@@ -24,9 +24,10 @@ function strike(context: GovernorContext, name: string, source: SourceState): vo
 /**
  * Ends the open window of a source. Every window teaches the cadence; one that
  * started in a quiet period stops there. A judged window is reported first, so
- * it belongs to the stretch it closes; then it feeds the running trial, or else
- * a bad one is a strike and a good one clears the strikes. No strike counts
- * while a trial runs.
+ * it belongs to the stretch it closes; when the hook changes the effects then,
+ * the governor starts over after a cooldown. Otherwise the window feeds the
+ * running trial, or else a bad one is a strike and a good one clears the
+ * strikes. No strike counts while a trial runs.
  */
 export function closeWindow(context: GovernorContext, name: string, source: SourceState): void {
   const gaps = [...source.gaps];
@@ -35,8 +36,10 @@ export function closeWindow(context: GovernorContext, name: string, source: Sour
   if (source.startedAt < context.quietUntil) return;
   const stats = judgeWindow(context.options, context.cadenceMs, gaps);
   keepWindow(source, stats);
-  context.hooks.judged(stats.isGood);
-  if (context.trial) trialWindow(context, name, stats);
+  if (context.hooks.judged(stats.isGood)) {
+    restartWindows(context);
+    context.quietUntil = context.now() + context.options.cooldownMs;
+  } else if (context.trial) trialWindow(context, name, stats);
   else if (stats.isGood) source.strikes = 0;
   else strike(context, name, source);
 }

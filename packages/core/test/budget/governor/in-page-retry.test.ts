@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { STORAGE_KEY } from "../../src/platform/storage/storage.constants";
-import { bootedPage as page } from "../support/booted-page";
-import { createFakeStorage } from "../support/fake-storage";
-import { smooth, stutter } from "../support/frames";
-import { stored } from "../support/stored";
+import { STORAGE_KEY } from "../../../src/platform/storage/storage.constants";
+import { bootedPage as page } from "../../support/booted-page";
+import { createFakeStorage } from "../../support/fake-storage";
+import { smooth, stutter } from "../../support/frames";
+import { stored } from "../../support/stored";
 
 describe("in-page retry", () => {
   it("turns a step down back on after a smooth stretch and forgives it when it holds", async () => {

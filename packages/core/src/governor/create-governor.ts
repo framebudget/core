@@ -1,4 +1,5 @@
 import { closeWindow } from "./close-window";
+import { restartWindows } from "./trial-window";
 import type { Governor, GovernorContext, GovernorHooks, GovernorOptions } from "./governor.types";
 import { lateFraction, windowFps } from "./judge-window";
 import { sourceRates } from "./source-rates";
@@ -32,6 +33,11 @@ export function createGovernor(options: GovernorOptions, now: () => number, hook
     },
     late() {
       return sourceRates(context.sources, lateFraction);
+    },
+    reset() {
+      context.trial = null;
+      restartWindows(context);
+      context.quietUntil = Math.max(context.quietUntil, context.now() + options.cooldownMs);
     },
   };
 }

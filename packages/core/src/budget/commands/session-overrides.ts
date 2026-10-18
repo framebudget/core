@@ -4,12 +4,15 @@ import { writeForcedTier } from "../../platform/overrides/forced-tier";
 import { writeSimulatedScore } from "../../platform/overrides/simulated-score";
 import type { BudgetState } from "../budget-state.types";
 import { recomputeDecision } from "../decision/recompute-decision";
+import { dropChecks } from "../governor/step-state";
 
+/** A forced tier replaces the device, so what the governor was checking says nothing anymore. */
 export function forceTier(state: BudgetState, tier: Tier | "auto"): void {
   const { scope, context } = state;
   if (!scope || !context) return;
   writeForcedTier(scope, tier);
   context.forced = tier === "auto" ? null : tier;
+  dropChecks(state);
   recomputeDecision(state, "force");
 }
 
@@ -25,8 +28,9 @@ export function simulateScore(state: BudgetState, value: number | null): void {
   if (!scope || !context) return;
   writeSimulatedScore(scope, value);
   context.simulated = value;
-  // Each simulated device starts fresh: no step down, trial, retry or halt carries over.
+  // Each simulated device starts fresh: no step down, check, retry or halt carries over.
+  dropChecks(state);
   state.stepped.length = 0;
-  Object.assign(state.steps, { trial: [], isHalted: false, retry: null, retried: [], hasRetryFailed: false });
+  Object.assign(state.steps, { isHalted: false, retried: [], hasRetryFailed: false });
   recomputeDecision(state, "simulate", true);
 }

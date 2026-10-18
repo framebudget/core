@@ -1,6 +1,7 @@
 import { exploreCandidates } from "../../core/telemetry/explore-candidates";
 import type { ShareOptions } from "../../core/telemetry/telemetry.types";
 import type { BudgetState } from "../budget-state.types";
+import { pageUses } from "../decision/current-fps";
 import { pageInput } from "../decision/decide-for-page";
 import { recomputeDecision } from "../decision/recompute-decision";
 
@@ -22,7 +23,7 @@ export function exploreEffect(state: BudgetState, share: ShareOptions): void {
   const random = state.init.random ?? Math.random;
   if (random() >= rate) return;
   const input = pageInput(state, context, score, decision.qualified);
-  const candidates = exploreCandidates(input, decision, [...state.used]);
+  const candidates = exploreCandidates(input, decision, pageUses(state));
   const picked = candidates[Math.floor(random() * candidates.length)];
   if (picked === undefined) return;
   state.explored = picked;

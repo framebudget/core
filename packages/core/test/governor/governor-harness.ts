@@ -40,6 +40,7 @@ export function harness(
     },
     judged(isGood) {
       verdicts.push(isGood);
+      return false;
     },
   });
   const frames = (count: number, gap: number, source?: string): void => {

@@ -40,8 +40,8 @@ export interface GovernorHooks {
    * the check goes on against the same starting frame rate.
    */
   trialChecked(hasHelped: boolean): boolean;
-  /** A window was judged. */
-  judged(isGood: boolean): void;
+  /** A window was judged. Returns true when the hook changed the effects, so the governor waits a cooldown. */
+  judged(isGood: boolean): boolean;
 }
 
 export interface Governor {
@@ -51,6 +51,8 @@ export interface Governor {
   fps(): Record<string, number>;
   /** Fraction of late frames per source over its recent judged windows. */
   late(): Record<string, number>;
+  /** Drops the running check, open windows and strikes, and waits a cooldown: the effects changed outside the governor. */
+  reset(): void;
 }
 
 /** One judged window. */

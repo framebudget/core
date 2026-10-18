@@ -4,7 +4,7 @@ import type { Decision } from "../../core/decision/decision.types";
 import { Tier } from "../../core/tier/tier.enum";
 import type { BudgetSnapshot } from "../budget.types";
 import type { BudgetState } from "../budget-state.types";
-import { currentFps, currentLate, usedEffects } from "./current-fps";
+import { currentFps, currentLate, pageUses } from "./current-fps";
 
 function decisionFields(
   decision: Decision | null,
@@ -57,7 +57,7 @@ export function buildSnapshot(state: BudgetState): BudgetSnapshot {
     off: decided.off,
     stepped: [...state.stepped],
     learned: [...state.learned],
-    used: usedEffects(state, device.calibration.effects),
+    used: pageUses(state),
     promoted: decided.promoted,
     explored: state.explored,
     fps: currentFps(state),

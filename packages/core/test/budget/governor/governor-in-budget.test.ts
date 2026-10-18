@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { ChangeReason } from "../../src/budget/budget.types";
-import { bootedPage as page } from "../support/booted-page";
-import { smooth, stutter } from "../support/frames";
-import { stored } from "../support/stored";
+import type { ChangeReason } from "../../../src/budget/budget.types";
+import { bootedPage as page } from "../../support/booted-page";
+import { smooth, stutter } from "../../support/frames";
+import { stored } from "../../support/stored";
 
 describe("governor in the budget", () => {
   it("steps down the most expensive used effect on a guess, and keeps it when the frames recover", async () => {

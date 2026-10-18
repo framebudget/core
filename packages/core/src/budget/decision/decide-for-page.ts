@@ -3,6 +3,7 @@ import type { DecideInput, Decision } from "../../core/decision/decision.types";
 import { widenDecision } from "../../core/decision/widen-decision";
 import type { StartContext } from "../../startup/startup.types";
 import type { BudgetState } from "../budget-state.types";
+import { pageUses } from "./current-fps";
 
 /** What the thresholds decide on: a simulated device has no kernel ratios and no history. */
 export function pageInput(
@@ -25,7 +26,11 @@ export function pageInput(
   };
 }
 
-/** The thresholds' decision, widened by the capacity and the explored effect. A forced tier stays exactly its set. */
+/**
+ * The thresholds' decision, widened by the capacity and the explored effect.
+ * A forced tier stays exactly its set. An explored effect that now passes its
+ * threshold on its own is no longer explored.
+ */
 export function decideForPage(
   state: BudgetState,
   context: StartContext,
@@ -34,7 +39,8 @@ export function decideForPage(
 ): Decision {
   const input = pageInput(state, context, score, previous);
   const decision = decide(input);
+  if (state.explored !== null && decision.qualified.includes(state.explored)) state.explored = null;
   return context.forced
     ? decision
-    : widenDecision({ ...input, used: [...state.used], explored: state.explored }, decision);
+    : widenDecision({ ...input, used: pageUses(state), explored: state.explored }, decision);
 }

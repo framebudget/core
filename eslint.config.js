@@ -153,10 +153,12 @@ export default defineConfig(
       ],
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/name-replacements": ["error", { allowList: { props: true } }],
-      // useBudget is the public React hook; sendReport, stepOnGuess and checkTrial are actions that report success.
+      // useBudget is the public React hook; the others are actions that report what they did.
       "unicorn/consistent-boolean-name": [
         "error",
-        { ignore: ["^useBudget$", "^sendReport$", "^stepOnGuess$", "^checkTrial$"] },
+        {
+          ignore: ["^useBudget$", "^sendReport$", "^stepOnGuess$", "^checkTrial$", "^countWindow$", "^settleStretch$"],
+        },
       ],
       // The public API returns null for "not measured"; null is part of the contract.
       "unicorn/no-null": "off",
