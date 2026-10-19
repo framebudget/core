@@ -1,6 +1,6 @@
 {
   "name": "@framebudget/vue",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Vue composables for framebudget: useBudget, useTier and provideBudget.",
   "license": "MIT",
   "author": "Aly <aly@alysson.dev>",
@@ -45,7 +45,7 @@
     "test": "vitest run --root ../.. packages/vue/test"
   },
   "dependencies": {
-    "@framebudget/core": "0.7.0"
+    "@framebudget/core": "0.8.0"
   },
   "peerDependencies": {
     "vue": ">=3.3"

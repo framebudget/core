@@ -1,6 +1,6 @@
 {
   "name": "@framebudget/core",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "The framebudget core without React: decides, per device, which visual effects a site can afford.",
   "license": "MIT",
   "author": "Aly <aly@alysson.dev>",
