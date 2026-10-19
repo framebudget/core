@@ -23,6 +23,13 @@ export interface ShareOptions {
    * Default https://framebudget.dev/api/calibration; set it to run your own calibration.
    */
   calibrationUrl?: string;
+  /**
+   * Fraction of reporting page views, 0 to 1, that turn on one used effect a
+   * little below its threshold (within 25%), so calibration also sees devices
+   * under the thresholds. The governor still steps it down if it stutters, and
+   * nothing is learned from it. Default 0 (off).
+   */
+  explore?: number;
 }
 
 /** `true` shares with every default, `false` or `null` turns sharing off. */
@@ -30,7 +37,7 @@ export type ShareSetting = ShareOptions | boolean | null;
 
 /** The whole report. No identifiers, no URL, no user agent, no timestamps. */
 export interface TelemetryReport {
-  v: 1;
+  v: 2;
   /** Calibration version the scores were computed against. */
   cal: string;
   score: number;
@@ -42,11 +49,18 @@ export interface TelemetryReport {
   tickMs: number | null;
   hints: { cores?: number; memoryGb?: number; pressure?: PressureState; reducedMotion: boolean };
   tier: Tier;
+  /** Effects allowed when the report is sent. */
   effects: string[];
-  /** Effects the governor stepped down on this page. */
+  /** Effects the page used: asked with allows(), reported frames for, or declared with `uses`. */
+  used: string[];
+  /** Effects the governor stepped down for good on this page and that are still off; guesses being checked are left out. */
   stepped: string[];
-  /** Median frames per second per source ("main", "worker" or an effect name), whole numbers. */
+  /** Effect this page view explored below its threshold, or null. */
+  explored: string | null;
+  /** Frames per second per source ("main", "worker" or an effect name) over its recent windows, whole numbers. */
   fps: Record<string, number>;
+  /** Fraction of late frames per source over its recent windows, 2 decimals. */
+  late: Record<string, number>;
 }
 
 export interface ReportInput {
@@ -58,6 +72,9 @@ export interface ReportInput {
   pressure?: PressureState;
   tier: Tier;
   effects: string[];
+  used: string[];
   stepped: string[];
+  explored: string | null;
   fps: Record<string, number>;
+  late: Record<string, number>;
 }

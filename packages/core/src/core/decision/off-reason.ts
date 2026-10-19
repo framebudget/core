@@ -1,6 +1,6 @@
 import type { EffectDefinition } from "../calibration/calibration.types";
 import type { Hints } from "../device/device.types";
-import type { DecideInput, OffReason } from "./decision.types";
+import type { DecideInput, Decision, OffReason } from "./decision.types";
 
 /** Off because of the visitor's motion or data preferences. */
 function preferenceReason(definition: EffectDefinition, hints: Hints): OffReason | undefined {
@@ -25,4 +25,10 @@ export function offReason(
   return qualified.includes(name)
     ? (preferenceReason(definition, input.hints) ?? historyReason(input, name))
     : "threshold";
+}
+
+/** Off only because of its threshold: the visitor's preferences and the effect's history would let it run. */
+export function isThresholdOnly(input: DecideInput, decision: Decision, name: string): boolean {
+  const definition = input.calibration.effects[name];
+  return !!definition && decision.off[name] === "threshold" && offReason(input, [name], name, definition) === undefined;
 }

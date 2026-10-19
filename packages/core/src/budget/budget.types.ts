@@ -24,9 +24,16 @@ export interface ConfigureOptions {
   governor?: Partial<GovernorOptions> & { auto?: boolean };
   /** `false` ignores the `?framebudget` diagnostics panel parameter. */
   panel?: boolean;
+  /**
+   * Effects the page runs without asking `allows()`, such as effects gated only
+   * with CSS on `data-framebudget-effects`. The governor only steps down effects
+   * the page uses, and the capacity only adds used effects.
+   */
+  uses?: string[];
 }
 
-export type ChangeReason = "warm" | "governor" | "pressure" | "motion" | "force" | "simulate" | "configure";
+export type ChangeReason =
+  "warm" | "governor" | "pressure" | "motion" | "force" | "simulate" | "configure" | "capacity" | "explore";
 
 export interface BudgetSnapshot {
   tier: Tier;
@@ -45,19 +52,30 @@ export interface BudgetSnapshot {
   pressure: PressureState | undefined;
   forced: Tier | null;
   off: Record<string, OffReason>;
-  /** Effects the governor stepped down on this page. */
+  /** Effects the governor stepped down on this page and that are still off. */
   stepped: string[];
   /** Effects kept off because they stuttered on earlier visits. */
   learned: string[];
-  /** Median frames per second per reported source. */
+  /** Effects the page used: asked with allows(), reported frames for, or declared with `uses`. */
+  used: string[];
+  /** Effects on below their threshold because the page's load fits the capacity. */
+  promoted: string[];
+  /** Effect this page view explores below its threshold for telemetry, or null. */
+  explored: string | null;
+  /** Frames per second per reported source over its recent judged windows. */
   fps: Record<string, number>;
+  /** Fraction of late frames (longer than 1.5 frame times) per reported source over its recent judged windows. */
+  late: Record<string, number>;
   calibration: Calibration;
 }
 
 export type ChangeListener = (snapshot: BudgetSnapshot, reason: ChangeReason) => void;
 
 export interface Budget {
-  /** May this effect run on this device? Unknown effects and server rendering answer false. */
+  /**
+   * May this effect run on this device? Unknown effects and server rendering
+   * answer false. Asking also tells the governor the page uses the effect.
+   */
   allows(effect: string): boolean;
   readonly tier: Tier;
   readonly score: number | null;
@@ -68,8 +86,9 @@ export interface Budget {
   off(type: "change", listener: ChangeListener): void;
   /**
    * Reports the time between two frames. `source` is "main" (default),
-   * "worker", or an effect name; strikes on an effect's own frames step that
-   * effect down, strikes elsewhere step the most expensive effect down.
+   * "worker", or an effect name. Strikes on an effect's own frames step that
+   * effect down; strikes elsewhere step down the likeliest used effect, and the
+   * governor turns it back on when the frames do not recover.
    */
   reportFrame(gapMs: number, source?: string): void;
   configure(options: ConfigureOptions): void;

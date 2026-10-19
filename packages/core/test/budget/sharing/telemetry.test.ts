@@ -15,9 +15,9 @@ describe("telemetry", () => {
     expect(browser.beacons[0]!.url).toBe(FRAMEBUDGET_REPORT_URL);
 
     const report = JSON.parse(browser.beacons[0]!.body) as TelemetryReport;
-    expect(sorted(Object.keys(report))).toEqual(
-      sorted(["cal", "cold", "effects", "fps", "hints", "kernels", "score", "stepped", "tickMs", "tier", "v", "warm"]),
-    );
+    const keys = "cal cold effects explored fps hints kernels late score stepped tickMs tier used v warm";
+    expect(sorted(Object.keys(report))).toEqual(sorted(keys.split(" ")));
+    expect(report.v).toBe(2);
     expect(sorted(Object.keys(report.hints))).toEqual(["cores", "memoryGb", "reducedMotion"]);
     expect(report.tier).toBe(budget.tier);
     expect(report.effects).toEqual(sorted(budget.effects()));

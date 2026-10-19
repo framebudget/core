@@ -24,4 +24,6 @@ export const defaultCalibration: Calibration = {
   pressure: { serious: 0.7, critical: 0.4 },
   scoreMaxAgeDays: 14,
   retryVisits: 5,
+  // Off until calibrated on real devices (see the worker's calibration script).
+  capacity: 0,
 };

@@ -1,5 +1,6 @@
 import { fromEntries } from "../../object/from-entries";
 import type { EffectDefinition } from "../calibration.types";
+import { KERNEL_NAMES } from "../kernel-names";
 import { isCalibrationNumber } from "./is-calibration-number";
 import { mergeKnown } from "./merge-known";
 
@@ -8,6 +9,18 @@ function effectFlags(patch: Partial<EffectDefinition>): Pick<EffectDefinition, "
   return {
     ...(typeof patch.motion === "boolean" && { motion: patch.motion }),
     ...(typeof patch.data === "boolean" && { data: patch.data }),
+  };
+}
+
+/** The patch's kernel weights, valid ones only. They replace the effect's weights whole. */
+function effectWeights(patch: Partial<EffectDefinition>): Pick<EffectDefinition, "weights"> {
+  const weights: unknown = patch.weights;
+  if (!weights || typeof weights !== "object") return {};
+  const values = weights as Record<string, unknown>;
+  return {
+    weights: fromEntries(
+      KERNEL_NAMES.filter((name) => isCalibrationNumber(values[name])).map((name) => [name, values[name] as number]),
+    ),
   };
 }
 
@@ -25,7 +38,7 @@ function mergedEffect(
   const existing = Object.keys(effects).includes(name) ? effects[name] : undefined;
   const isComplete = isCalibrationNumber(patch.threshold) && isCalibrationNumber(patch.cost);
   return existing || isComplete
-    ? { ...mergeKnown(existing ?? { threshold: 0, cost: 0 }, patch), ...effectFlags(patch) }
+    ? { ...mergeKnown(existing ?? { threshold: 0, cost: 0 }, patch), ...effectFlags(patch), ...effectWeights(patch) }
     : undefined;
 }
 

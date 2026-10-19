@@ -153,8 +153,22 @@ export default defineConfig(
       ],
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/name-replacements": ["error", { allowList: { props: true } }],
-      // useBudget is the public React hook; sendReport and strikeOut are actions that report success.
-      "unicorn/consistent-boolean-name": ["error", { ignore: ["^useBudget$", "^sendReport$", "^strikeOut$"] }],
+      // useBudget is the public React hook; the others are actions that report what they did.
+      "unicorn/consistent-boolean-name": [
+        "error",
+        {
+          ignore: [
+            "^useBudget$",
+            "^sendReport$",
+            "^stepOnGuess$",
+            "^checkTrial$",
+            "^countWindow$",
+            "^settleStretch$",
+            "^abandonRetry$",
+            "^closeStretch$",
+          ],
+        },
+      ],
       // The public API returns null for "not measured"; null is part of the contract.
       "unicorn/no-null": "off",
       // JSDoc stays conventional: `/** one line */` and ` * ` prefixed blocks.
@@ -165,6 +179,7 @@ export default defineConfig(
       "unicorn/prefer-at": "off",
       "unicorn/no-array-sort": "off",
       "unicorn/prefer-structured-clone": "off",
+      "unicorn/prefer-promise-try": "off",
       // parseFloat semantics (leading-number parse, "" -> NaN) are part of the URL/session contract.
       "unicorn/prefer-number-coercion": "off",
     },

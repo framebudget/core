@@ -4,6 +4,9 @@ import type { PanelRow } from "../panel.types";
 import { renderSection } from "./render-section";
 
 export function renderFpsSection(body: HTMLElement, snapshot: BudgetSnapshot): void {
-  const rows = Object.entries(snapshot.fps).map(([source, fps]): PanelRow => [source, formatNumber(fps)]);
+  const rows = Object.entries(snapshot.fps).map(([source, fps]): PanelRow => [
+    source,
+    `${formatNumber(fps)}, ${formatNumber((snapshot.late[source] ?? 0) * 100)}% late`,
+  ]);
   if (rows.length > 0) renderSection(body, "Frames per second", rows);
 }

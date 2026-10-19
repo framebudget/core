@@ -9,3 +9,5 @@ export const WAKE_EVENTS = ["scroll", "wheel", "pointerdown", "pointermove", "to
 export const PANEL_PARAM = /(?:^|[?&])framebudget(?:[=&#]|$)/;
 /** Fraction of page views that report when the site sets no sample rate. */
 export const DEFAULT_SAMPLE_RATE = 0.1;
+/** Effects stepped down on a guess before the governor concludes the stutter is not theirs. */
+export const MAX_GUESSES = 3;

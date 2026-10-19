@@ -1,6 +1,8 @@
 import type { BenchResult } from "../../benchmark/benchmark.types";
 import { runBenchmarkAsync } from "../../benchmark/run-benchmark-async";
 import { calibrationKey } from "../../core/calibration/calibration-key";
+import type { KernelRatios } from "../../core/calibration/calibration.types";
+import { blendRatios, kernelRatios } from "../../core/score/kernel-ratios";
 import type { Scope } from "../../platform/scope/scope.types";
 import { cachedScore } from "../../startup/cached-score";
 import { createBenchOptions } from "../../startup/create-bench-options";
@@ -18,13 +20,14 @@ function zeroTimeoutPause(scope: Scope): () => Promise<void> {
     });
 }
 
-/** Smooths the warm score with the cached one, so one noisy page moves the tier less. */
-function storeWarmScore(state: BudgetState, context: StartContext, score: number): void {
+/** Smooths the warm score and its kernel ratios with the cached ones, so one noisy page moves the tier less. */
+function storeWarmScore(state: BudgetState, context: StartContext, score: number, ratios: KernelRatios): void {
   const nowMs = Date.now();
   const cached = cachedScore(context, nowMs);
   context.stored = {
     ...context.stored,
     score: cached === undefined ? score : (cached + score) / 2,
+    ratios: blendRatios(cached === undefined ? undefined : context.stored.ratios, ratios),
     key: calibrationKey(context.calibration),
     at: nowMs,
   };
@@ -32,10 +35,12 @@ function storeWarmScore(state: BudgetState, context: StartContext, score: number
 }
 
 function applyWarmResult(state: BudgetState, context: StartContext, result: BenchResult): void {
+  const ratios = kernelRatios(result.rates, context.calibration.reference);
   state.warm = result;
-  if (context.simulated === null) storeWarmScore(state, context, result.score);
+  if (context.simulated === null) storeWarmScore(state, context, result.score, ratios);
   state.score = result.score;
   state.source = "warm";
+  state.ratios = ratios;
   recomputeDecision(state, "warm");
 }
 

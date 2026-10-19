@@ -6,6 +6,7 @@ import { safe } from "../../platform/scope/safe";
 import type { Scope } from "../../platform/scope/scope.types";
 import { DEFAULT_SAMPLE_RATE } from "../budget.constants";
 import type { BudgetState } from "../budget-state.types";
+import { exploreEffect } from "./explore-effect";
 import { flushReport } from "./flush-report";
 import { refreshRemoteCalibration } from "./refresh-remote-calibration";
 
@@ -36,7 +37,10 @@ function calibrationUrl(share: ShareOptions): string {
   return typeof url === "string" && url !== "" ? url : SHARE_CALIBRATION_URL;
 }
 
-/** Starts opt-in sharing after load: refreshes the calibration and arms the report for sampled page views. */
+/**
+ * Starts opt-in sharing after load: refreshes the calibration, arms the report
+ * for sampled page views and lets some of them explore an effect.
+ */
 export function startSharing(state: BudgetState): void {
   const { scope, context } = state;
   if (!scope || !context || !state.isLoaded) return;
@@ -45,6 +49,7 @@ export function startSharing(state: BudgetState): void {
   refreshRemoteCalibration(scope, context, calibrationUrl(share));
   if (state.isSharingArmed) return;
   state.isSharingArmed = true;
-  if (!isReportDue(share, context.stored, context.calibration.version, Date.now())) return;
-  if (isSampled(state, share)) armReportFlush(state, scope);
+  if (!isReportDue(share, context.stored, context.calibration.version, Date.now()) || !isSampled(state, share)) return;
+  armReportFlush(state, scope);
+  exploreEffect(state, share);
 }
