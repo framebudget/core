@@ -2,6 +2,26 @@
 
 Every release of the framebudget library, newest first, split by package: `@framebudget/core`, `@framebudget/react` and `framebudget`. Releases up to 0.2.1 are split into the library and the website (framebudget.dev), which now has its own changelog in [framebudget/website](https://github.com/framebudget/website).
 
+## [0.7.0] - 2026-10-19
+
+### @framebudget/core
+
+#### Features
+
+- **bindings:** add vue and angular packages ([14598a0](https://github.com/framebudget/core/commit/14598a08be77458425359642eda647a42a0bfc82)) ([#22](https://github.com/framebudget/core/pull/22))
+
+### Framework bindings
+
+#### Features
+
+- **bindings:** add vue and angular packages ([14598a0](https://github.com/framebudget/core/commit/14598a08be77458425359642eda647a42a0bfc82)) ([#22](https://github.com/framebudget/core/pull/22))
+
+### framebudget
+
+#### Features
+
+- **bindings:** add vue and angular packages ([14598a0](https://github.com/framebudget/core/commit/14598a08be77458425359642eda647a42a0bfc82)) ([#22](https://github.com/framebudget/core/pull/22))
+
 ## [0.6.0] - 2026-10-19
 
 ### @framebudget/core
