@@ -1,0 +1,56 @@
+{
+  "name": "@framebudget/angular",
+  "version": "0.5.0",
+  "description": "Angular signals for framebudget: injectBudget, injectTier and provideBudget.",
+  "license": "MIT",
+  "homepage": "https://framebudget.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/framebudget/core.git",
+    "directory": "packages/angular"
+  },
+  "bugs": {
+    "url": "https://github.com/framebudget/core/issues"
+  },
+  "keywords": [
+    "performance",
+    "animation",
+    "frame budget",
+    "device capability",
+    "adaptive loading",
+    "prefers-reduced-motion",
+    "angular",
+    "signals"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@framebudget/core": "0.5.0"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "@angular/core": {
+      "optional": true
+    }
+  }
+}

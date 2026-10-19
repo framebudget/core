@@ -21,26 +21,30 @@ At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page tr
 npm install framebudget
 ```
 
-That installs everything: the core, the boot script, the diagnostics panel and the React hooks (`framebudget`, `framebudget/boot`, `framebudget/panel` and `framebudget/react`). ESM only, with type declarations. `react` is an optional peer dependency, needed only for `framebudget/react`: installing framebudget never installs React.
+That installs everything: the core, the boot script, the diagnostics panel and the React, Vue and Angular bindings (`framebudget`, `framebudget/boot`, `framebudget/panel`, `framebudget/react`, `framebudget/vue` and `framebudget/angular`). ESM only, with type declarations. `react`, `vue` and `@angular/core` are optional peer dependencies, each needed only for its own entry: installing framebudget never installs a framework.
 
-The same code is also published as two scoped packages, for projects that want only part of it:
+The same code is also published as scoped packages, for projects that want only part of it:
 
 | Package | Contains | Entries |
 | --- | --- | --- |
-| `framebudget` | everything: re-exports the two packages below | `framebudget`, `framebudget/boot`, `framebudget/panel`, `framebudget/react` |
-| `@framebudget/core` | the base, without React | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
+| `framebudget` | everything: re-exports the packages below | `framebudget`, `framebudget/boot`, `framebudget/panel`, `framebudget/react`, `framebudget/vue`, `framebudget/angular` |
+| `@framebudget/core` | the base, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
 | `@framebudget/react` | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` |
+| `@framebudget/vue` | the Vue composables; brings `@framebudget/core` with it | `@framebudget/vue` |
+| `@framebudget/angular` | the Angular signals; brings `@framebudget/core` with it | `@framebudget/angular` |
 
 ```sh
-npm install @framebudget/core    # the base only
-npm install @framebudget/react   # the hooks, with the core
+npm install @framebudget/core      # the base only
+npm install @framebudget/react     # the React hooks, with the core
+npm install @framebudget/vue       # the Vue composables, with the core
+npm install @framebudget/angular   # the Angular signals, with the core
 ```
 
-The code exists once: `framebudget` only re-exports the scoped packages, so a page has a single `budget` whether it imports `framebudget`, `@framebudget/core` or both. The examples below import from `framebudget`; with the scoped packages, import the same names from `@framebudget/core` (and `@framebudget/react` for the hooks).
+The code exists once: `framebudget` only re-exports the scoped packages, so a page has a single `budget` whether it imports `framebudget`, `@framebudget/core` or both. The examples below import from `framebudget`; with the scoped packages, import the same names from `@framebudget/core` (and from the binding package for your framework).
 
 ### From GitHub Packages
 
-Releases are published to npmjs (from 0.6.0) and also to GitHub Packages, which carries the scoped packages `@framebudget/core` and `@framebudget/react` only (it does not accept the unscoped `framebudget`). Installing from GitHub Packages needs a GitHub token with `read:packages`, also for public packages. Point the scope at the GitHub registry in your project's `.npmrc`:
+Releases are published to npmjs (from 0.6.0) and also to GitHub Packages, which carries the scoped packages only (it does not accept the unscoped `framebudget`). Installing from GitHub Packages needs a GitHub token with `read:packages`, also for public packages. Point the scope at the GitHub registry in your project's `.npmrc`:
 
 ```ini
 @framebudget:registry=https://npm.pkg.github.com
@@ -50,7 +54,7 @@ Releases are published to npmjs (from 0.6.0) and also to GitHub Packages, which 
 Then install the scoped packages (prereleases are on the `next` dist-tag):
 
 ```sh
-npm install @framebudget/core    # or @framebudget/react for the hooks
+npm install @framebudget/core    # or the binding for your framework, such as @framebudget/vue
 ```
 
 ## 1. Add the boot script
@@ -115,6 +119,48 @@ function Page() {
 ```
 
 The hooks are also published on their own as `@framebudget/react`. During server rendering and hydration, `useBudget` answers `false` and `useTier` answers `Lite`, so effects only start on the client. `BudgetProvider` is only needed for a budget other than the page's (for example `createBudget()` in tests).
+
+### Vue
+
+```vue
+<script setup lang="ts">
+import { useBudget, useTier } from "framebudget/vue";
+
+const parallax = useBudget("parallax"); // computed ref, follows the budget
+const tier = useTier();
+</script>
+
+<template>
+  <Layers v-if="parallax" :data-tier="tier" />
+  <StaticHero v-else />
+</template>
+```
+
+The composables are also published on their own as `@framebudget/vue` (Vue 3.3 or later). In a component they answer `false` and `Lite` until it mounts, so server rendering and hydration agree and effects only start on the client; outside a component (an effect scope, a store) they answer at once. The subscription ends with the component or the effect scope. The effect name may be a ref or a getter, such as a prop. `provideBudget(budget)`, called in a parent's setup, is only needed for a budget other than the page's.
+
+### Angular
+
+```ts
+import { Component } from "@angular/core";
+import { injectBudget, injectTier } from "framebudget/angular";
+
+@Component({
+  selector: "app-hero",
+  template: `
+    @if (parallax()) {
+      <app-layers [attr.data-tier]="tier()" />
+    } @else {
+      <app-static-hero />
+    }
+  `,
+})
+export class Hero {
+  readonly parallax = injectBudget("parallax"); // Signal<boolean>, follows the budget
+  readonly tier = injectTier();
+}
+```
+
+The signals are also published on their own as `@framebudget/angular` (Angular 18 or later). Call them in an injection context, such as a field initializer or a constructor; the subscription ends with the component, service or application that injected them. They answer `false` and `Lite` until the first render in the browser, so server rendering and hydration agree and effects only start on the client. The effect name may be a signal, such as an input. `provideBudget(budget)`, in the providers of the application, a route or a component, is only needed for a budget other than the page's. The package declares no decorators, so it needs no Angular compiler step and works in AOT and JIT builds.
 
 ## API
 
@@ -300,28 +346,30 @@ While sharing, framebudget fetches a calibration patch (JSON in the `calibration
 
 ## Development
 
-The repository ([github.com/framebudget/core](https://github.com/framebudget/core)) is an npm workspaces monorepo. Its three packages are released together, always at the same version:
+The repository ([github.com/framebudget/core](https://github.com/framebudget/core)) is an npm workspaces monorepo. Its five packages are released together, always at the same version:
 
 ```
-packages/core/         @framebudget/core   all the code except React: budget, boot script, panel, benchmark, governor, platform, startup
-packages/react/        @framebudget/react  BudgetProvider, useBudget, useTier; depends on @framebudget/core
-packages/framebudget/  framebudget         re-exports @framebudget/core and @framebudget/react, no code of its own
+packages/core/         @framebudget/core     all the code without a framework: budget, boot script, panel, benchmark, governor, platform, startup
+packages/react/        @framebudget/react    BudgetProvider, useBudget, useTier; depends on @framebudget/core
+packages/vue/          @framebudget/vue      provideBudget, useBudget, useTier; depends on @framebudget/core
+packages/angular/      @framebudget/angular  provideBudget, injectBudget, injectTier; depends on @framebudget/core
+packages/framebudget/  framebudget           re-exports the four scoped packages, no code of its own
 scripts/               size report, pack check, and the release tooling (scripts/release/, also used by the website)
 ```
 
-`@framebudget/react` uses the core like any site does, through its public entry. `framebudget` depends on both scoped packages at the exact same version, and its files hold only `export ... from` statements. The lint enforces both, so the code exists once and a page always has one `budget`.
+The framework bindings use the core like any site does, through its public entry. `framebudget` depends on every scoped package at the exact same version, and its files hold only `export ... from` statements. The lint enforces both, so the code exists once and a page always has one `budget`.
 
 The website (the landing page and API reference at framebudget.dev, and the Cloudflare Worker that serves it and collects reports) lives in [github.com/framebudget/website](https://github.com/framebudget/website). The brand (logo, fonts, tokens, the release art template) and the launch video live in [github.com/framebudget/assets](https://github.com/framebudget/assets).
 
 ```sh
 npm install
-npm run build      # core (boot script bundle, then tsup), react (tsup), framebudget (tsc), in that order
-npm test           # vitest (packages/*/test), then the release script tests (node --test)
+npm run build      # core (boot script bundle, then tsup), react, vue and angular (tsup), framebudget (tsc), in that order
+npm test           # vitest (packages/*/test; the Vue and Angular bindings run in happy-dom), then the release script tests (node --test)
 npm run typecheck
 npm run lint       # eslint (rules below); lint:fix applies the safe fixes
 npm run format     # prettier
 npm run size       # minified and gzipped sizes per entry
-npm run pack -- --out /tmp/pack   # builds, packs and checks the three tarballs, then smoke-installs them
+npm run pack -- --out /tmp/pack   # builds, packs and checks the five tarballs, then smoke-installs them
 ```
 
 A pre-commit hook (husky and lint-staged, installed by `npm install`) formats and lints the staged files, then runs the typecheck, the full lint and the tests.
@@ -334,13 +382,13 @@ The core source is layered, and `eslint.config.js` enforces the layers:
 - `packages/core/src/startup`: the first decision, shared by the boot script and the core.
 - `packages/core/src/budget`, `packages/core/src/boot`, `packages/core/src/panel`: the public entries.
 
-`@framebudget/core` imports neither React nor the other packages, and `@framebudget/react` imports only the public entries of `@framebudget/core`.
+`@framebudget/core` imports no framework and none of the other packages, and the bindings (`@framebudget/react`, `@framebudget/vue`, `@framebudget/angular`) import only the public entries of `@framebudget/core`.
 
 Lint limits: 80 lines per file and 60 per function (blank and comment lines excluded), 8 files per folder (group by concern in subfolders past that), interfaces and type aliases only in `*.types.ts` files (`*.enum.ts` for a const object and its union type), kebab-case file names, descriptive identifiers.
 
 `packages/core/src/boot/source.generated.ts` is generated from `packages/core/src/boot/runtime.ts` by `packages/core/scripts/build-boot.mjs`. The build, test, typecheck and lint scripts regenerate it.
 
-`scripts/pack.mjs --out <dir>` builds every package, packs each one into `<dir>`, and fails on any file other than `package.json`, `README.md`, `LICENSE` and the `dist/` JavaScript and declarations, or on an install script. It then installs the three tarballs into a throwaway project and checks that `framebudget` and `@framebudget/core` share one `budget`, that `framebudget/react` exports `useBudget`, and that React was not installed. The root `README.md` is copied into `packages/framebudget/` as that package's readme.
+`scripts/pack.mjs --out <dir>` builds every package, packs each one into `<dir>`, and fails on any file other than `package.json`, `README.md`, `LICENSE` and the `dist/` JavaScript and declarations, or on an install script. It then installs the five tarballs into a throwaway project and checks that `framebudget` and `@framebudget/core` share one `budget`, that `framebudget/react`, `framebudget/vue` and `framebudget/angular` export their bindings, and that no framework (React, Vue, Angular) was installed. The root `README.md` is copied into `packages/framebudget/` as that package's readme.
 
 ### Pull request checks
 
@@ -358,14 +406,14 @@ git tag v0.3.0 && git push origin v0.3.0
 `.github/workflows/release.yml` then:
 
 1. checks the tag (format, order, no existing release) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
-2. writes the notes from the commits since the previous tag, split per package as `release.config.json` defines (`@framebudget/core`: `packages/core/`; `@framebudget/react`: `packages/react/`; `framebudget`: `packages/framebudget/` and `README.md`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package versions and `package-lock.json`;
-3. verifies the registry signatures of the dependencies, audits them, tests, sets the version in every package, then builds, checks and packs the three tarballs once (`scripts/pack.mjs`) and attests their build provenance;
-4. publishes `@framebudget/core` and `@framebudget/react` to GitHub Packages (it rejects unscoped names), and all three packages to npmjs with provenance; prereleases go to the `next` dist-tag;
+2. writes the notes from the commits since the previous tag, split per package as `release.config.json` defines (`@framebudget/core`: `packages/core/`; framework bindings: `packages/react/`, `packages/vue/` and `packages/angular/`; `framebudget`: `packages/framebudget/` and `README.md`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package versions and `package-lock.json`;
+3. verifies the registry signatures of the dependencies, audits them, tests, sets the version in every package, then builds, checks and packs the five tarballs once (`scripts/pack.mjs`) and attests their build provenance;
+4. publishes the four scoped packages to GitHub Packages (it rejects unscoped names), and all five packages to npmjs with provenance; prereleases go to the `next` dist-tag;
 5. renders the release art from the template in [framebudget/assets](https://github.com/framebudget/assets), creates a draft release with the notes, the art, the tarballs and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
 
-`.github/workflows/publish-npm.yml` (run by hand with a `tag`) publishes the tarballs of an existing release to npmjs, after verifying them (release asset and build provenance): a release from before npmjs publishing, or one whose npmjs step failed. A version already on npmjs is skipped.
+`.github/workflows/publish-npm.yml` (run by hand with a `tag`) publishes the tarballs of an existing release to npmjs, after verifying them (release asset and build provenance): a release from before npmjs publishing, or one whose npmjs step failed. A version already on npmjs is skipped, and so are the Vue and Angular bindings for releases cut before they existed.
 
-Both npmjs jobs run in the `Production` environment. npm authenticates with trusted publishing (OIDC) for each package that trusts the workflow on npmjs, and otherwise with the environment's `NPMJS_FRAMEBUDGET_TOKEN` secret, an npm granular access token with write access to the three packages. To set up trusted publishing, on npmjs.com open each package's Settings, Trusted publishing, add GitHub Actions with organization `framebudget`, repository `core`, environment `Production`, and workflow `release.yml`, then add a second one with workflow `publish-npm.yml`. Once both release paths have published through it, set Publishing access to "Require two-factor authentication and disallow tokens", revoke the token and delete the secret.
+Both npmjs jobs run in the `Production` environment. npm authenticates with trusted publishing (OIDC) for each package that trusts the workflow on npmjs, and otherwise with the environment's `NPMJS_FRAMEBUDGET_TOKEN` secret, an npm granular access token with write access to every package (a new package, such as a new framework binding, is created by its first publish, so the token must cover it). To set up trusted publishing, on npmjs.com open each package's Settings, Trusted publishing, add GitHub Actions with organization `framebudget`, repository `core`, environment `Production`, and workflow `release.yml`, then add a second one with workflow `publish-npm.yml`. A package can only trust a workflow once it exists, so a new package publishes its first version with the token. Once both release paths have published through it, set Publishing access to "Require two-factor authentication and disallow tokens", revoke the token and delete the secret.
 
 Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/core` (build provenance: the workflow run and the commit that produced it).
 

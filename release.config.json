@@ -2,7 +2,11 @@
   "label": "Library release",
   "sections": [
     { "id": "core", "title": "@framebudget/core", "paths": ["packages/core/"] },
-    { "id": "react", "title": "@framebudget/react", "paths": ["packages/react/"] },
+    {
+      "id": "bindings",
+      "title": "Framework bindings",
+      "paths": ["packages/react/", "packages/vue/", "packages/angular/"]
+    },
     { "id": "framebudget", "title": "framebudget", "paths": ["packages/framebudget/", "README.md"] }
   ]
 }

@@ -214,8 +214,8 @@ export default defineConfig(
   layer([`${CORE}/platform/**/*.ts`], ["startup", "budget", "boot", "panel"]),
   layer([`${CORE}/startup/**/*.ts`], ["budget", "boot", "panel"]),
   {
-    // React bindings use the core like any site does: through its public entries.
-    files: ["packages/react/src/**/*.ts"],
+    // Framework bindings use the core like any site does: through its public entries.
+    files: ["packages/react/src/**/*.ts", "packages/vue/src/**/*.ts", "packages/angular/src/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -253,6 +253,14 @@ export default defineConfig(
       // Test doubles stand in for browser objects, which need loose shapes.
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/unbound-method": "off",
+    },
+  },
+  {
+    // Angular components are classes.
+    files: ["packages/angular/test/**/*.ts"],
+    rules: {
+      "functional/no-classes": "off",
+      "functional/no-this-expressions": "off",
     },
   },
   {

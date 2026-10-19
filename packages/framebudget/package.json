@@ -19,7 +19,9 @@
     "device capability",
     "adaptive loading",
     "prefers-reduced-motion",
-    "react"
+    "react",
+    "vue",
+    "angular"
   ],
   "type": "module",
   "sideEffects": false,
@@ -40,6 +42,14 @@
       "types": "./dist/panel.d.ts",
       "import": "./dist/panel.js"
     },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.js"
+    },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "import": "./dist/angular.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",
@@ -54,14 +64,24 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json"
   },
   "dependencies": {
+    "@framebudget/angular": "0.5.0",
     "@framebudget/core": "0.5.0",
-    "@framebudget/react": "0.5.0"
+    "@framebudget/react": "0.5.0",
+    "@framebudget/vue": "0.5.0"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "@angular/core": ">=18",
+    "react": ">=18",
+    "vue": ">=3.3"
   },
   "peerDependenciesMeta": {
+    "@angular/core": {
+      "optional": true
+    },
     "react": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   }
