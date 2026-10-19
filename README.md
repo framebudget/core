@@ -414,7 +414,7 @@ git tag v0.3.0 && git push origin v0.3.0
 
 `.github/workflows/publish-npm.yml` (run by hand with a `tag`) publishes the tarballs of an existing release to npmjs, after verifying them (release asset and build provenance): a release from before npmjs publishing, or one whose npmjs step failed. A version already on npmjs is skipped, and so are the Vue and Angular bindings for releases cut before they existed.
 
-Both npmjs jobs run in the `Production` environment. npm authenticates with trusted publishing (OIDC) for each package that trusts the workflow on npmjs, and otherwise with the environment's `NPMJS_FRAMEBUDGET_TOKEN` secret, an npm granular access token with write access to every package (a new package, such as a new framework binding, is created by its first publish, so the token must cover it).
+Both npmjs jobs run in the `Production` environment and authenticate with trusted publishing (OIDC) only: there is no npm token in the repository. Each package's Publishing access is set to "Require two-factor authentication and disallow tokens".
 
 Every package trusts `release.yml`: GitHub Actions, repository `framebudget/core`, environment `Production`, with only `npm publish` allowed (`npm publish --tag` sets the dist-tag, so `npm dist-tag` is not needed). With npm 12 or later, logged in as a maintainer, the first call asks for two-factor authentication and offers to skip it for 5 minutes:
 
@@ -426,7 +426,9 @@ done
 npm trust list framebudget
 ```
 
-npm validates a new trust on its first publish through it and expires it when nothing publishes within 2 days, so add a trust just before cutting a release (a package can only be trusted once it exists, so a new package publishes its first version with the token). `publish-npm.yml` only republishes what a release left unpublished: trust it only when you are about to run it, and the run validates it. Once a release has published every package through trusted publishing (`npm view <package>@<version> _npmUser` shows `GitHub Actions`), set each package's Publishing access to "Require two-factor authentication and disallow tokens", revoke the token and delete the secret.
+npm validates a new trust on its first publish through it and expires it when nothing publishes within 2 days, so add a trust just before cutting a release. `publish-npm.yml` only republishes what a release left unpublished: trust it only when you are about to run it, and the run validates it. `npm view <package>@<version> _npmUser` shows `GitHub Actions` for a version published through trusted publishing.
+
+A package can only trust a workflow once it exists on npmjs. Before the first release of a new package (a new framework binding), publish a placeholder version (such as `0.0.0-stage`) by hand with two-factor authentication, trust `release.yml` for it, set its Publishing access to "Require two-factor authentication and disallow tokens", then cut the release.
 
 Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/core` (build provenance: the workflow run and the commit that produced it).
 
