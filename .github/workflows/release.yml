@@ -8,7 +8,7 @@
 #   notes           release notes, release art, changelog pull request (release/vX.Y.Z)
 #   package         when a package changed: audit, test, set the version, pack the three tarballs once
 #   publish-github  @framebudget/core and @framebudget/react to GitHub Packages
-#   publish-npm     all three to npmjs with provenance, when the NPM_TOKEN secret is set
+#   publish-npm     all three to npmjs with provenance (Production environment)
 #   release         draft with notes, art, tarballs and SHA256SUMS, then publish (immutable)
 #
 # Sections and paths come from release.config.json; the art template from framebudget/assets.
@@ -226,6 +226,9 @@ jobs:
     name: Publish to npmjs
     needs: [validate, package]
     runs-on: ubuntu-latest
+    # npm authenticates with trusted publishing (the job's OIDC token) where the
+    # package trusts this workflow on npmjs, else with the environment's token.
+    environment: Production
     permissions:
       id-token: write
     env:
@@ -239,16 +242,14 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or later; Node 22 ships npm 10.
+      - run: npm install --global npm@11
       # Dependencies first, so framebudget never points at an unpublished version.
       # A version already on npmjs (a re-run) is skipped; npm versions are permanent.
       - name: Publish the three packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_FRAMEBUDGET_TOKEN }}
         run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::notice::The NPM_TOKEN secret is not set; skipping npmjs. Publish later with the publish-npm workflow."
-            exit 0
-          fi
           if [ "$PRERELEASE" = "true" ]; then dist_tag=next; else dist_tag=latest; fi
           for name in @framebudget/core @framebudget/react framebudget; do
             file=""
