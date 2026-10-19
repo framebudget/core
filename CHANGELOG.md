@@ -2,6 +2,26 @@
 
 Every release of the framebudget library, newest first, split by package: `@framebudget/core`, `@framebudget/react` and `framebudget`. Releases up to 0.2.1 are split into the library and the website (framebudget.dev), which now has its own changelog in [framebudget/website](https://github.com/framebudget/website).
 
+## [0.8.0] - 2026-10-19
+
+### @framebudget/core
+
+#### Breaking changes
+
+- **framebudget:** ship the core only ([ac4351a](https://github.com/framebudget/core/commit/ac4351ae510ac6d8cbaaf97c010d3fe9817da797)) ([#24](https://github.com/framebudget/core/pull/24))
+
+### Framework bindings
+
+#### Breaking changes
+
+- **framebudget:** ship the core only ([ac4351a](https://github.com/framebudget/core/commit/ac4351ae510ac6d8cbaaf97c010d3fe9817da797)) ([#24](https://github.com/framebudget/core/pull/24))
+
+### framebudget
+
+#### Breaking changes
+
+- **framebudget:** ship the core only ([ac4351a](https://github.com/framebudget/core/commit/ac4351ae510ac6d8cbaaf97c010d3fe9817da797)) ([#24](https://github.com/framebudget/core/pull/24))
+
 ## [0.7.0] - 2026-10-19
 
 ### @framebudget/core
