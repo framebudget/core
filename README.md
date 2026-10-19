@@ -40,7 +40,7 @@ The code exists once: `framebudget` only re-exports the scoped packages, so a pa
 
 ### From GitHub Packages
 
-Publishing to npmjs is coming. Until then, releases are published to GitHub Packages, which carries the scoped packages `@framebudget/core` and `@framebudget/react` only (it does not accept the unscoped `framebudget`). Installing from it needs a GitHub token with `read:packages`, also for public packages. Point the scope at the GitHub registry in your project's `.npmrc`:
+Releases are published to npmjs (from 0.6.0) and also to GitHub Packages, which carries the scoped packages `@framebudget/core` and `@framebudget/react` only (it does not accept the unscoped `framebudget`). Installing from GitHub Packages needs a GitHub token with `read:packages`, also for public packages. Point the scope at the GitHub registry in your project's `.npmrc`:
 
 ```ini
 @framebudget:registry=https://npm.pkg.github.com
@@ -360,10 +360,12 @@ git tag v0.3.0 && git push origin v0.3.0
 1. checks the tag (format, order, no existing release) and warns in the run summary when the commits ask for a bigger bump (breaking: major, minor while 0.x; feat: minor);
 2. writes the notes from the commits since the previous tag, split per package as `release.config.json` defines (`@framebudget/core`: `packages/core/`; `@framebudget/react`: `packages/react/`; `framebudget`: `packages/framebudget/` and `README.md`), and opens a `chore(release): vX.Y.Z` pull request with `CHANGELOG.md`, the package versions and `package-lock.json`;
 3. verifies the registry signatures of the dependencies, audits them, tests, sets the version in every package, then builds, checks and packs the three tarballs once (`scripts/pack.mjs`) and attests their build provenance;
-4. publishes `@framebudget/core` and `@framebudget/react` to GitHub Packages (it rejects unscoped names), and all three packages to npmjs with provenance when the `NPM_TOKEN` secret is set (otherwise it skips with a notice); prereleases go to the `next` dist-tag;
+4. publishes `@framebudget/core` and `@framebudget/react` to GitHub Packages (it rejects unscoped names), and all three packages to npmjs with provenance; prereleases go to the `next` dist-tag;
 5. renders the release art from the template in [framebudget/assets](https://github.com/framebudget/assets), creates a draft release with the notes, the art, the tarballs and `SHA256SUMS`, publishes it, and verifies the attestation GitHub signs over the tag, the commit and every asset.
 
-`.github/workflows/publish-npm.yml` (run by hand with a `tag`) publishes the tarballs of an existing release to npmjs, after verifying them (release asset and build provenance).
+`.github/workflows/publish-npm.yml` (run by hand with a `tag`) publishes the tarballs of an existing release to npmjs, after verifying them (release asset and build provenance): a release from before npmjs publishing, or one whose npmjs step failed. A version already on npmjs is skipped.
+
+Both npmjs jobs run in the `Production` environment. npm authenticates with trusted publishing (OIDC) for each package that trusts the workflow on npmjs, and otherwise with the environment's `NPMJS_FRAMEBUDGET_TOKEN` secret, an npm granular access token with write access to the three packages. To set up trusted publishing, on npmjs.com open each package's Settings, Trusted publishing, add GitHub Actions with organization `framebudget`, repository `core`, environment `Production`, and workflow `release.yml`, then add a second one with workflow `publish-npm.yml`. Once both release paths have published through it, set Publishing access to "Require two-factor authentication and disallow tokens", revoke the token and delete the secret.
 
 Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/core` (build provenance: the workflow run and the commit that produced it).
 
