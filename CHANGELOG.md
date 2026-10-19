@@ -2,6 +2,24 @@
 
 Every release of the framebudget library, newest first, split by package: `@framebudget/core`, `@framebudget/react` and `framebudget`. Releases up to 0.2.1 are split into the library and the website (framebudget.dev), which now has its own changelog in [framebudget/website](https://github.com/framebudget/website).
 
+## [0.6.0] - 2026-10-19
+
+### @framebudget/core
+
+#### Features
+
+- **budget:** balance effects by real use ([d2412b6](https://github.com/framebudget/core/commit/d2412b6ffac0e4a574fd7cf708544ff60c83114f)) ([#19](https://github.com/framebudget/core/pull/19))
+
+### @framebudget/react
+
+No changes.
+
+### framebudget
+
+#### Features
+
+- **budget:** balance effects by real use ([d2412b6](https://github.com/framebudget/core/commit/d2412b6ffac0e4a574fd7cf708544ff60c83114f)) ([#19](https://github.com/framebudget/core/pull/19))
+
 ## [0.5.0] - 2026-10-07
 
 ### @framebudget/core
