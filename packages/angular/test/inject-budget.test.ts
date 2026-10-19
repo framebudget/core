@@ -13,8 +13,8 @@ import {
 import { createApplication } from "@angular/platform-browser";
 import { afterEach, describe, expect, it } from "vitest";
 import { injectBudget, injectTier, provideBudget } from "../src/index";
-import { fakeBudget } from "./fake-budget";
-import type { FakeBudget } from "./fake-budget.types";
+import { fakeBudget } from "../../core/test/support/bindings/fake-budget";
+import type { FakeBudget } from "../../core/test/support/bindings/fake-budget.types";
 
 class Probe {
   readonly effect = signal("parallax");

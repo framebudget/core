@@ -4,7 +4,7 @@ import { createApp, createSSRApp, defineComponent, h, nextTick, ref, type Ref } 
 import { renderToString } from "vue/server-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { provideBudget, useBudget, useTier } from "../src/index";
-import { fakeBudget } from "./fake-budget";
+import { fakeBudget } from "../../core/test/support/bindings/fake-budget";
 
 // A parent provides the budget; the child renders "<allowed> <tier>".
 function page(budget: Budget, effect: Ref<string>) {
