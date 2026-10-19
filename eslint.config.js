@@ -235,7 +235,7 @@ export default defineConfig(
     },
   },
   {
-    // The framebudget package only re-exports the scoped packages, so the code exists once.
+    // The framebudget package only re-exports @framebudget/core, so the code exists once.
     files: ["packages/framebudget/src/**/*.ts"],
     rules: {
       "no-restricted-syntax": [

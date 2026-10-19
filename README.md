@@ -21,26 +21,27 @@ At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page tr
 npm install framebudget
 ```
 
-That installs everything: the core, the boot script, the diagnostics panel and the React, Vue and Angular bindings (`framebudget`, `framebudget/boot`, `framebudget/panel`, `framebudget/react`, `framebudget/vue` and `framebudget/angular`). ESM only, with type declarations. `react`, `vue` and `@angular/core` are optional peer dependencies, each needed only for its own entry: installing framebudget never installs a framework.
+That installs the core, without any framework: the budget, the boot script and the diagnostics panel (`framebudget`, `framebudget/boot` and `framebudget/panel`). ESM only, with type declarations. Its one dependency is `@framebudget/core`, the same code under the org scope.
 
-The same code is also published as scoped packages, for projects that want only part of it:
+For React, Vue or Angular, add the package for your framework. Each one brings the core with it, and has its framework as a peer dependency:
+
+```sh
+npm install @framebudget/react     # React 18 or later: useBudget, useTier, BudgetProvider
+npm install @framebudget/vue       # Vue 3.3 or later: useBudget, useTier, provideBudget
+npm install @framebudget/angular   # Angular 18 or later: injectBudget, injectTier, provideBudget
+```
 
 | Package | Contains | Entries |
 | --- | --- | --- |
-| `framebudget` | everything: re-exports the packages below | `framebudget`, `framebudget/boot`, `framebudget/panel`, `framebudget/react`, `framebudget/vue`, `framebudget/angular` |
-| `@framebudget/core` | the base, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
+| `framebudget` | the core under its short name: re-exports `@framebudget/core` | `framebudget`, `framebudget/boot`, `framebudget/panel` |
+| `@framebudget/core` | the core, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
 | `@framebudget/react` | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` |
 | `@framebudget/vue` | the Vue composables; brings `@framebudget/core` with it | `@framebudget/vue` |
 | `@framebudget/angular` | the Angular signals; brings `@framebudget/core` with it | `@framebudget/angular` |
 
-```sh
-npm install @framebudget/core      # the base only
-npm install @framebudget/react     # the React hooks, with the core
-npm install @framebudget/vue       # the Vue composables, with the core
-npm install @framebudget/angular   # the Angular signals, with the core
-```
+The code exists once: `framebudget` only re-exports `@framebudget/core`, and every framework package depends on `@framebudget/core`, so a page has a single `budget` whichever of them it imports. The examples below import the core from `framebudget`; `@framebudget/core` exports the same names.
 
-The code exists once: `framebudget` only re-exports the scoped packages, so a page has a single `budget` whether it imports `framebudget`, `@framebudget/core` or both. The examples below import from `framebudget`; with the scoped packages, import the same names from `@framebudget/core` (and from the binding package for your framework).
+Until 0.7.0, `framebudget` also re-exported the framework packages as `framebudget/react`, `framebudget/vue` and `framebudget/angular`. Those entries are gone: import from `@framebudget/react`, `@framebudget/vue` and `@framebudget/angular`, the same code.
 
 ### From GitHub Packages
 
@@ -109,7 +110,7 @@ On the server (no `window`), `allows()` answers `false` and `tier` is `Lite`.
 ### React
 
 ```tsx
-import { useBudget, useTier } from "framebudget/react";
+import { useBudget, useTier } from "@framebudget/react";
 
 function Page() {
   const animate = useBudget("pageTransition"); // boolean, re-renders on change
@@ -118,13 +119,13 @@ function Page() {
 }
 ```
 
-The hooks are also published on their own as `@framebudget/react`. During server rendering and hydration, `useBudget` answers `false` and `useTier` answers `Lite`, so effects only start on the client. `BudgetProvider` is only needed for a budget other than the page's (for example `createBudget()` in tests).
+Install `@framebudget/react` (React 18 or later). During server rendering and hydration, `useBudget` answers `false` and `useTier` answers `Lite`, so effects only start on the client. `BudgetProvider` is only needed for a budget other than the page's (for example `createBudget()` in tests).
 
 ### Vue
 
 ```vue
 <script setup lang="ts">
-import { useBudget, useTier } from "framebudget/vue";
+import { useBudget, useTier } from "@framebudget/vue";
 
 const parallax = useBudget("parallax"); // computed ref, follows the budget
 const tier = useTier();
@@ -136,13 +137,13 @@ const tier = useTier();
 </template>
 ```
 
-The composables are also published on their own as `@framebudget/vue` (Vue 3.3 or later). In a component they answer `false` and `Lite` until it mounts, so server rendering and hydration agree and effects only start on the client; outside a component (an effect scope, a store) they answer at once. The subscription ends with the component or the effect scope. The effect name may be a ref or a getter, such as a prop. `provideBudget(budget)`, called in a parent's setup, is only needed for a budget other than the page's.
+Install `@framebudget/vue` (Vue 3.3 or later). In a component they answer `false` and `Lite` until it mounts, so server rendering and hydration agree and effects only start on the client; outside a component (an effect scope, a store) they answer at once. The subscription ends with the component or the effect scope. The effect name may be a ref or a getter, such as a prop. `provideBudget(budget)`, called in a parent's setup, is only needed for a budget other than the page's.
 
 ### Angular
 
 ```ts
 import { Component } from "@angular/core";
-import { injectBudget, injectTier } from "framebudget/angular";
+import { injectBudget, injectTier } from "@framebudget/angular";
 
 @Component({
   selector: "app-hero",
@@ -160,7 +161,7 @@ export class Hero {
 }
 ```
 
-The signals are also published on their own as `@framebudget/angular` (Angular 18 or later). Call them in an injection context, such as a field initializer or a constructor; the subscription ends with the component, service or application that injected them. They answer `false` and `Lite` until the first render in the browser, so server rendering and hydration agree and effects only start on the client. The effect name may be a signal, such as an input. `provideBudget(budget)`, in the providers of the application, a route or a component, is only needed for a budget other than the page's. The package declares no decorators, so it needs no Angular compiler step and works in AOT and JIT builds.
+Install `@framebudget/angular` (Angular 18 or later). Call them in an injection context, such as a field initializer or a constructor; the subscription ends with the component, service or application that injected them. They answer `false` and `Lite` until the first render in the browser, so server rendering and hydration agree and effects only start on the client. The effect name may be a signal, such as an input. `provideBudget(budget)`, in the providers of the application, a route or a component, is only needed for a budget other than the page's. The package declares no decorators, so it needs no Angular compiler step and works in AOT and JIT builds.
 
 ## API
 
@@ -353,11 +354,11 @@ packages/core/         @framebudget/core     all the code without a framework: b
 packages/react/        @framebudget/react    BudgetProvider, useBudget, useTier; depends on @framebudget/core
 packages/vue/          @framebudget/vue      provideBudget, useBudget, useTier; depends on @framebudget/core
 packages/angular/      @framebudget/angular  provideBudget, injectBudget, injectTier; depends on @framebudget/core
-packages/framebudget/  framebudget           re-exports the four scoped packages, no code of its own
+packages/framebudget/  framebudget           re-exports @framebudget/core under the short name, no code of its own
 scripts/               size report, pack check, and the release tooling (scripts/release/, also used by the website)
 ```
 
-The framework bindings use the core like any site does, through its public entry. `framebudget` depends on every scoped package at the exact same version, and its files hold only `export ... from` statements. The lint enforces both, so the code exists once and a page always has one `budget`.
+The framework bindings use the core like any site does, through its public entry. `framebudget` depends on `@framebudget/core` alone, at the exact same version, and its files hold only `export ... from` statements. The lint enforces both, so the code exists once and a page always has one `budget`.
 
 The website (the landing page and API reference at framebudget.dev, and the Cloudflare Worker that serves it and collects reports) lives in [github.com/framebudget/website](https://github.com/framebudget/website). The brand (logo, fonts, tokens, the release art template) and the launch video live in [github.com/framebudget/assets](https://github.com/framebudget/assets).
 
@@ -388,7 +389,7 @@ Lint limits: 80 lines per file and 60 per function (blank and comment lines excl
 
 `packages/core/src/boot/source.generated.ts` is generated from `packages/core/src/boot/runtime.ts` by `packages/core/scripts/build-boot.mjs`. The build, test, typecheck and lint scripts regenerate it.
 
-`scripts/pack.mjs --out <dir>` builds every package, packs each one into `<dir>`, and fails on any file other than `package.json`, `README.md`, `LICENSE` and the `dist/` JavaScript and declarations, or on an install script. It then installs the five tarballs into a throwaway project and checks that `framebudget` and `@framebudget/core` share one `budget`, that `framebudget/react`, `framebudget/vue` and `framebudget/angular` export their bindings, and that no framework (React, Vue, Angular) was installed. The root `README.md` is copied into `packages/framebudget/` as that package's readme.
+`scripts/pack.mjs --out <dir>` builds every package, packs each one into `<dir>`, and fails on any file other than `package.json`, `README.md`, `LICENSE` and the `dist/` JavaScript and declarations, or on an install script. It then installs the five tarballs into a throwaway project and checks that `framebudget` and `@framebudget/core` share one `budget`, that `@framebudget/react`, `@framebudget/vue` and `@framebudget/angular` export their bindings, and that no framework (React, Vue, Angular) was installed. The root `README.md` is copied into `packages/framebudget/` as that package's readme.
 
 ### Pull request checks
 
