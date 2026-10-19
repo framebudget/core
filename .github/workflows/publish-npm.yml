@@ -27,8 +27,8 @@ jobs:
   publish:
     name: Publish ${{ inputs.tag }} to npmjs
     runs-on: ubuntu-latest
-    # npm authenticates with trusted publishing (the job's OIDC token) where the
-    # package trusts this workflow on npmjs, else with the environment's token.
+    # npm authenticates with trusted publishing (the job's OIDC token). Packages
+    # trust release.yml; trust this workflow on npmjs right before running it.
     environment: Production
     permissions:
       contents: read
@@ -69,8 +69,6 @@ jobs:
       # cut before the Vue and Angular bindings existed have no tarball for them.
       - name: Publish the packages
         working-directory: tarballs
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_FRAMEBUDGET_TOKEN }}
         run: |
           for name in @framebudget/core @framebudget/react @framebudget/vue @framebudget/angular framebudget; do
             file=""
