@@ -6,9 +6,9 @@
 #
 #   validate        tag format and order, bump warning, what shipped (changed, changed_<section>)
 #   notes           release notes, release art, changelog pull request (release/vX.Y.Z)
-#   package         when a package changed: audit, test, set the version, pack the three tarballs once
-#   publish-github  @framebudget/core and @framebudget/react to GitHub Packages
-#   publish-npm     all three to npmjs with provenance (Production environment)
+#   package         when a package changed: audit, test, set the version, pack the five tarballs once
+#   publish-github  the four scoped packages (@framebudget/core, react, vue, angular) to GitHub Packages
+#   publish-npm     all five to npmjs with provenance (Production environment)
 #   release         draft with notes, art, tarballs and SHA256SUMS, then publish (immutable)
 #
 # Sections and paths come from release.config.json; the art template from framebudget/assets.
@@ -159,7 +159,7 @@ jobs:
       - name: Set the package versions
         run: node scripts/release/set-version.mjs "$VERSION"
       # pack.mjs builds every package, packs each tarball once, checks what ships
-      # and smoke-installs the three together; its last line lists the tarballs.
+      # and smoke-installs the five together; its last line lists the tarballs.
       - name: Pack once and check what ships
         run: |
           out="$RUNNER_TEMP/pack"
@@ -168,8 +168,8 @@ jobs:
             const fs = require("fs");
             const names = JSON.parse(fs.readFileSync(0, "utf8"));
             const packed = fs.readdirSync(process.env.OUT).filter((f) => f.endsWith(".tgz")).sort();
-            if (names.length !== 3 || JSON.stringify([...names].sort()) !== JSON.stringify(packed)) {
-              console.error("Expected three tarballs; pack.mjs listed [" + names + "], " + process.env.OUT + " holds [" + packed + "]");
+            if (names.length !== 5 || JSON.stringify([...names].sort()) !== JSON.stringify(packed)) {
+              console.error("Expected five tarballs; pack.mjs listed [" + names + "], " + process.env.OUT + " holds [" + packed + "]");
               process.exit(1);
             }
             console.log("Packed " + names.join(", "));
@@ -210,7 +210,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "$PRERELEASE" = "true" ]; then dist_tag=next; else dist_tag=latest; fi
-          for name in @framebudget/core @framebudget/react; do
+          for name in @framebudget/core @framebudget/react @framebudget/vue @framebudget/angular; do
             file=""
             for tarball in *.tgz; do
               if [ "$(tar -xzOf "$tarball" package/package.json | jq -r .name)" = "$name" ]; then file="$tarball"; fi
@@ -246,12 +246,12 @@ jobs:
       - run: npm install --global npm@11
       # Dependencies first, so framebudget never points at an unpublished version.
       # A version already on npmjs (a re-run) is skipped; npm versions are permanent.
-      - name: Publish the three packages
+      - name: Publish the five packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_FRAMEBUDGET_TOKEN }}
         run: |
           if [ "$PRERELEASE" = "true" ]; then dist_tag=next; else dist_tag=latest; fi
-          for name in @framebudget/core @framebudget/react framebudget; do
+          for name in @framebudget/core @framebudget/react @framebudget/vue @framebudget/angular framebudget; do
             file=""
             for tarball in *.tgz; do
               if [ "$(tar -xzOf "$tarball" package/package.json | jq -r .name)" = "$name" ]; then file="$tarball"; fi

@@ -1,7 +1,7 @@
 {
   "name": "@framebudget/monorepo",
   "private": true,
-  "description": "Workspace root of the framebudget packages: @framebudget/core, @framebudget/react and framebudget.",
+  "description": "Workspace root of the framebudget packages: @framebudget/core, @framebudget/react, @framebudget/vue, @framebudget/angular and framebudget.",
   "license": "MIT",
   "type": "module",
   "workspaces": [
@@ -9,9 +9,9 @@
   ],
   "scripts": {
     "boot": "node packages/core/scripts/build-boot.mjs",
-    "build": "npm run build -w packages/core && npm run build -w packages/react && npm run build -w packages/framebudget",
+    "build": "npm run build -w packages/core && npm run build -w packages/react && npm run build -w packages/vue && npm run build -w packages/angular && npm run build -w packages/framebudget",
     "test": "node packages/core/scripts/build-boot.mjs && vitest run && node --test scripts/release/*.test.mjs",
-    "typecheck": "node packages/core/scripts/build-boot.mjs && tsc --noEmit && tsc --noEmit -p packages/core/test",
+    "typecheck": "node packages/core/scripts/build-boot.mjs && tsc --noEmit && tsc --noEmit -p packages/core/test && tsc --noEmit -p packages/vue/test && tsc --noEmit -p packages/angular/test",
     "size": "node scripts/size.mjs",
     "pack": "node scripts/pack.mjs",
     "lint": "node packages/core/scripts/build-boot.mjs && eslint --max-warnings=0 .",
@@ -23,6 +23,10 @@
     "release:art": "node scripts/release/render-art.mjs"
   },
   "devDependencies": {
+    "@angular/common": "^22.2.3",
+    "@angular/compiler": "^22.2.3",
+    "@angular/core": "^22.2.3",
+    "@angular/platform-browser": "^22.2.3",
     "@eslint/js": "^10.0.0",
     "@types/node": "^22.20.5",
     "@types/react": "^19.2.0",
@@ -33,14 +37,17 @@
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-unicorn": "^77.0.0",
     "globals": "^17.0.0",
+    "happy-dom": "^21.0.3",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.9",
     "react": "^19.2.0",
+    "rxjs": "^7.8.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "vue": "^3.5.44"
   },
   "overrides": {
     "deepmerge-ts": "^8.0.2",

@@ -1,10 +1,10 @@
-// Builds the three packages, packs them into --out, checks every tarball and
+// Builds the five packages, packs them into --out, checks every tarball and
 // smoke-installs them together into a throwaway project.
 //
 //   node scripts/pack.mjs --out <dir>
 //
 // Assumes `npm ci` ran. The last stdout line is a JSON array of the tarball
-// file names in <dir>, in publish order (core, react, framebudget).
+// file names in <dir>, in publish order (core, react, vue, angular, framebudget).
 import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
@@ -22,7 +22,9 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const PACKAGES = ["core", "react", "framebudget"];
+const PACKAGES = ["core", "react", "vue", "angular", "framebudget"];
+// The frameworks are the site's own dependencies (optional peers): never installed with the packages.
+const FRAMEWORKS = ["react", "vue", path.join("@angular", "core")];
 const ALLOWED_FILE = /^(package\.json|README\.md|LICENSE|dist\/.+\.(js|d\.ts))$/;
 const INSTALL_SCRIPTS = ["preinstall", "install", "postinstall"];
 
@@ -65,22 +67,33 @@ function smoke(tarballs) {
       project,
     );
     const modules = path.join(project, "node_modules");
-    if (existsSync(path.join(modules, "react"))) throw new Error("Installing the tarballs installed React.");
+    for (const framework of FRAMEWORKS) {
+      if (existsSync(path.join(modules, framework))) throw new Error(`Installing the tarballs installed ${framework}.`);
+    }
     const copies = countInstalledCopies(project, path.join("@framebudget", "core"));
     if (copies !== 1) throw new Error(`Expected one installed @framebudget/core, found ${copies}.`);
-    // React is the site's own dependency: link the workspace copy to load the hooks.
-    symlinkSync(path.join(root, "node_modules", "react"), path.join(modules, "react"), "dir");
+    // Link the workspace copies of the frameworks to load the bindings.
+    mkdirSync(path.join(modules, "@angular"), { recursive: true });
+    for (const framework of FRAMEWORKS) {
+      symlinkSync(path.join(root, "node_modules", framework), path.join(modules, framework), "dir");
+    }
     const check = `
       import * as meta from "framebudget";
       import * as core from "@framebudget/core";
       import { bootScript } from "framebudget/boot";
       import { useBudget } from "framebudget/react";
+      import { useBudget as useVueBudget } from "framebudget/vue";
+      import { injectBudget } from "framebudget/angular";
       if (meta.budget === undefined || meta.budget !== core.budget) throw new Error("framebudget and @framebudget/core hold different budgets.");
       if (typeof useBudget !== "function") throw new Error("framebudget/react does not export useBudget.");
+      if (typeof useVueBudget !== "function") throw new Error("framebudget/vue does not export useBudget.");
+      if (typeof injectBudget !== "function") throw new Error("framebudget/angular does not export injectBudget.");
       if (typeof bootScript !== "string") throw new Error("framebudget/boot does not export bootScript.");
     `;
     run(process.execPath, ["--input-type=module", "--eval", check], project);
-    log("smoke install: one budget across framebudget and @framebudget/core, useBudget exported, React not installed");
+    log(
+      "smoke install: one budget across framebudget and @framebudget/core, every binding exported, no framework installed",
+    );
   } finally {
     rmSync(project, { recursive: true, force: true });
   }

@@ -2,7 +2,7 @@
 # every job; marking one ready for review starts the run.
 #
 #   library   format, lint, typecheck, tests (vitest and the release scripts), build, size,
-#             and pack (checks the three tarballs and smoke-installs them)
+#             and pack (checks the five tarballs and smoke-installs them)
 #   gate      one required check: fails when the library job failed or was cancelled
 name: CI
 

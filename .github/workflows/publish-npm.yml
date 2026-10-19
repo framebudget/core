@@ -65,18 +65,25 @@ jobs:
       # Trusted publishing needs npm 11.5.1 or later; Node 22 ships npm 10.
       - run: npm install --global npm@11
       # Dependencies first, so framebudget never points at an unpublished version.
-      # A version already on npmjs is skipped; npm versions are permanent.
-      - name: Publish the three packages
+      # A version already on npmjs is skipped; npm versions are permanent. Releases
+      # cut before the Vue and Angular bindings existed have no tarball for them.
+      - name: Publish the packages
         working-directory: tarballs
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_FRAMEBUDGET_TOKEN }}
         run: |
-          for name in @framebudget/core @framebudget/react framebudget; do
+          for name in @framebudget/core @framebudget/react @framebudget/vue @framebudget/angular framebudget; do
             file=""
             for tarball in *.tgz; do
               if [ "$(tar -xzOf "$tarball" package/package.json | jq -r .name)" = "$name" ]; then file="$tarball"; fi
             done
             if [ -z "$file" ]; then
+              case "$name" in
+                @framebudget/vue | @framebudget/angular)
+                  echo "::notice::$TAG predates $name."
+                  continue
+                  ;;
+              esac
               echo "::error::$TAG has no tarball for $name."
               exit 1
             fi

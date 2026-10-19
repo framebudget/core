@@ -17,7 +17,9 @@
       "@framebudget/core": ["./packages/core/src/index.ts"],
       "@framebudget/core/boot": ["./packages/core/src/boot/index.ts"],
       "@framebudget/core/panel": ["./packages/core/src/panel/index.ts"],
-      "@framebudget/react": ["./packages/react/src/index.ts"]
+      "@framebudget/react": ["./packages/react/src/index.ts"],
+      "@framebudget/vue": ["./packages/vue/src/index.ts"],
+      "@framebudget/angular": ["./packages/angular/src/index.ts"]
     }
   },
   "include": ["packages/*/src"]
