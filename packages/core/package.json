@@ -3,6 +3,7 @@
   "version": "0.5.0",
   "description": "The framebudget core without React: decides, per device, which visual effects a site can afford.",
   "license": "MIT",
+  "author": "Aly <aly@alysson.dev>",
   "homepage": "https://framebudget.dev",
   "repository": {
     "type": "git",
@@ -47,6 +48,7 @@
   },
   "scripts": {
     "boot": "node scripts/build-boot.mjs",
-    "build": "node scripts/build-boot.mjs && tsup"
+    "build": "node scripts/build-boot.mjs && tsup",
+    "test": "node scripts/build-boot.mjs && vitest run --root ../.. packages/core/test"
   }
 }

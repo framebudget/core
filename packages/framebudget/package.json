@@ -3,6 +3,7 @@
   "version": "0.5.0",
   "description": "Decides, per device, which visual effects a site can afford. Keep the effects. Lose the stutter.",
   "license": "MIT",
+  "author": "Aly <aly@alysson.dev>",
   "homepage": "https://framebudget.dev",
   "repository": {
     "type": "git",
@@ -18,10 +19,7 @@
     "frame budget",
     "device capability",
     "adaptive loading",
-    "prefers-reduced-motion",
-    "react",
-    "vue",
-    "angular"
+    "prefers-reduced-motion"
   ],
   "type": "module",
   "sideEffects": false,
@@ -34,21 +32,9 @@
       "types": "./dist/boot.d.ts",
       "import": "./dist/boot.js"
     },
-    "./react": {
-      "types": "./dist/react.d.ts",
-      "import": "./dist/react.js"
-    },
     "./panel": {
       "types": "./dist/panel.d.ts",
       "import": "./dist/panel.js"
-    },
-    "./vue": {
-      "types": "./dist/vue.d.ts",
-      "import": "./dist/vue.js"
-    },
-    "./angular": {
-      "types": "./dist/angular.d.ts",
-      "import": "./dist/angular.js"
     },
     "./package.json": "./package.json"
   },
@@ -61,28 +47,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json"
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test": "npm --prefix ../core test"
   },
   "dependencies": {
-    "@framebudget/angular": "0.5.0",
-    "@framebudget/core": "0.5.0",
-    "@framebudget/react": "0.5.0",
-    "@framebudget/vue": "0.5.0"
-  },
-  "peerDependencies": {
-    "@angular/core": ">=18",
-    "react": ">=18",
-    "vue": ">=3.3"
-  },
-  "peerDependenciesMeta": {
-    "@angular/core": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "vue": {
-      "optional": true
-    }
+    "@framebudget/core": "0.5.0"
   }
 }

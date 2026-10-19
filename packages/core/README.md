@@ -6,7 +6,7 @@
 
 At 60 Hz every frame has a 16.7 ms budget. Each visual effect (parallax, page transitions, canvas animations, sounds, blur) spends part of it. framebudget measures how much budget a device really has and allows only the effects that fit, so slow phones never stutter and fast phones keep everything.
 
-`@framebudget/core` is the framework-free base: the budget, the boot script and the diagnostics panel, with no dependencies. Use it on any site, or through the bindings for React, Vue and Angular, which install it for you.
+`@framebudget/core` is the framework-free base: the budget, the boot script and the diagnostics panel, with no dependencies. Use it on any site (it is also published as [`framebudget`](https://www.npmjs.com/package/framebudget), the same code under the short name), or through the packages for React, Vue and Angular, which install it for you.
 
 ## How it decides
 
@@ -69,17 +69,28 @@ Add `?framebudget` to any URL to open the diagnostics panel: scores, the state o
 | `@framebudget/core/boot` | `bootScript`, `createBootScript(options)` |
 | `@framebudget/core/panel` | `mountPanel(budget)`, loaded on demand |
 
+## Privacy and network access
+
+framebudget decides on the device, and by default nothing leaves it: the benchmark, the governor and local learning work offline, and what they learn stays in one `localStorage` entry.
+
+The network is only used when the site enables sharing with `configure({ share: true })`, which is off by default:
+
+- an anonymous report (scores, tier, effects, frame rates; no identifiers, cookies, URL or user agent) goes to `https://framebudget.dev/api/report` with `navigator.sendBeacon`, for a sampled share of page views (10% by default), at most once every 7 days per browser by default;
+- a calibration patch is fetched from `https://framebudget.dev/api/calibration` at most once a day, after load, without credentials, so the shared reports improve the thresholds back.
+
+Neither happens under Global Privacy Control or Save-Data, and no report is sent while a tier is forced or a device is simulated. See [Telemetry and privacy](https://github.com/framebudget/core#telemetry-and-privacy) for every field and option.
+
 ## The framebudget packages
 
 All of them are released together, at the same version. A page has one `budget`, whichever of them it imports.
 
 | Package | For |
 | --- | --- |
-| [`@framebudget/core`](https://www.npmjs.com/package/@framebudget/core) | any site, no framework: the budget, the boot script and the diagnostics panel |
+| [`framebudget`](https://www.npmjs.com/package/framebudget) | any site: the core under its short name (`framebudget`, `framebudget/boot`, `framebudget/panel`) |
+| [`@framebudget/core`](https://www.npmjs.com/package/@framebudget/core) | the same core under the org scope, which the framework packages depend on |
 | [`@framebudget/react`](https://www.npmjs.com/package/@framebudget/react) | React 18 or later: `useBudget`, `useTier`, `BudgetProvider` |
 | [`@framebudget/vue`](https://www.npmjs.com/package/@framebudget/vue) | Vue 3.3 or later: `useBudget`, `useTier`, `provideBudget` |
 | [`@framebudget/angular`](https://www.npmjs.com/package/@framebudget/angular) | Angular 18 or later: `injectBudget`, `injectTier`, `provideBudget` |
-| [`framebudget`](https://www.npmjs.com/package/framebudget) | everything above in one install, re-exported (`framebudget/react`, `framebudget/vue`, `framebudget/angular`) |
 
 ## Documentation
 
