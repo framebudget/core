@@ -1,7 +1,7 @@
-import { safe } from "../../platform/scope/safe";
-import type { Scope } from "../../platform/scope/scope.types";
-import { ACTIVE_MS, WAKE_EVENTS } from "../budget.constants";
-import type { BudgetState, FrameSampler } from "../budget-state.types";
+import { safe } from "../../../platform/scope/safe";
+import type { Scope } from "../../../platform/scope/scope.types";
+import { ACTIVE_MS, WAKE_EVENTS } from "../../budget.constants";
+import type { BudgetState, FrameSampler } from "../../budget-state.types";
 
 function recordFrame(state: BudgetState, scope: Scope, sampler: FrameSampler, time: number): void {
   if (safe(() => scope.document?.visibilityState) === "hidden") {

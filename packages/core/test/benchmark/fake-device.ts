@@ -3,9 +3,10 @@ import type { BenchOptions, Kernel } from "../../src/benchmark/benchmark.types";
 import type { KernelName } from "../../src/core/calibration/calibration.types";
 import type { FakeDevice, FakeDeviceSettings } from "./fake-device.types";
 
-export const REFERENCE: Record<KernelName, number> = { float: 4000, typed: 8000, alloc: 2000, path: 1000 };
-const BATCH: Record<KernelName, number> = { float: 40, typed: 80, alloc: 20, path: 10 };
-export const NAMES = Object.keys(REFERENCE) as KernelName[];
+export const REFERENCE: Record<KernelName, number> = { float: 4000, typed: 8000, alloc: 2000, path: 1000, raster: 500 };
+const BATCH: Record<KernelName, number> = { float: 40, typed: 80, alloc: 20, path: 10, raster: 5 };
+/** The kernels a device runs by default: the cold run's, raster excluded. */
+export const NAMES: readonly KernelName[] = ["float", "typed", "alloc", "path"];
 
 export function device(speed: Partial<Record<KernelName, number>> = {}, settings: FakeDeviceSettings = {}): FakeDevice {
   const state = { time: 0, units: {} as Record<string, number> };
@@ -14,7 +15,7 @@ export function device(speed: Partial<Record<KernelName, number>> = {}, settings
     const resolution = settings.resolution;
     return resolution ? Math.floor(state.time / resolution) * resolution : state.time;
   };
-  const kernels: Kernel[] = NAMES.map((name) => ({
+  const kernels: Kernel[] = (settings.names ?? NAMES).map((name) => ({
     name,
     batch: BATCH[name],
     run(units) {

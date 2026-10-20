@@ -1,8 +1,9 @@
+import { createKernels } from "../benchmark/kernels/create-kernels";
 import { runBenchmark } from "../benchmark/run-benchmark";
 import { safe } from "../platform/scope/safe";
 import type { Scope } from "../platform/scope/scope.types";
+import { benchSettings } from "./bench-settings";
 import { cachedScore } from "./cached-score";
-import { createBenchOptions } from "./create-bench-options";
 import type { InitialScore, StartContext } from "./startup.types";
 
 /**
@@ -16,6 +17,9 @@ export function initialScore(scope: Scope, context: StartContext, coldMs: number
   if (cached !== undefined) return { score: cached, source: "cached", cold: null };
   const fallback: InitialScore = { score: context.calibration.fallbackScore, source: "fallback", cold: null };
   if (context.forced) return fallback;
-  const cold = safe(() => runBenchmark(createBenchOptions(scope, context.calibration, coldMs, false)));
+  // The cold kernels only, without createBenchOptions, so the boot script never bundles the warm raster kernel.
+  const cold = safe(() =>
+    runBenchmark({ ...benchSettings(scope, context.calibration, coldMs, false), kernels: createKernels(scope) }),
+  );
   return cold ? { score: cold.score, source: "cold", cold } : fallback;
 }

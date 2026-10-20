@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { harness, OPTIONS } from "./governor-harness";
+import { harness } from "./governor-harness";
 
 describe("governor cadence", () => {
-  it("judges a display that never drew faster than 30 Hz against its own cadence", () => {
-    const governed = harness("kept", { ...OPTIONS, minFps: 24 });
+  it("judges a display that never drew faster than 30 Hz against its own cadence, and 30 fps is not under minFps", () => {
+    const governed = harness("kept");
     governed.clock.time = 1000;
     governed.frames(16, 33.3); // a power-saving cap: steady, never faster
     expect(governed.strikeOuts).toEqual([]);
@@ -15,9 +15,9 @@ describe("governor cadence", () => {
   it("checks a step under a steady rate below minFps, and finds it does not help when the display is capped", () => {
     const governed = harness("trial");
     governed.clock.time = 1000;
-    governed.frames(12, 33.3);
+    governed.frames(12, 40); // a steady 25 Hz cap, under the default minFps of 30
     expect(governed.strikeOuts).toEqual(["main"]);
-    governed.frames(40, 33.3); // past the cooldown, three windows as slow as before
+    governed.frames(40, 40); // past the cooldown, three windows as slow as before
     expect(governed.trials).toEqual([false]);
   });
 

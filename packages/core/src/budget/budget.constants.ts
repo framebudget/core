@@ -11,3 +11,5 @@ export const PANEL_PARAM = /(?:^|[?&])framebudget(?:[=&#]|$)/;
 export const DEFAULT_SAMPLE_RATE = 0.1;
 /** Effects stepped down on a guess before the governor concludes the stutter is not theirs. */
 export const MAX_GUESSES = 3;
+/** Frames kept for the governor before load: about 16 s at 60 fps, more than any load should take. */
+export const MAX_PENDING_FRAMES = 1000;

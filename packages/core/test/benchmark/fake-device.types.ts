@@ -15,4 +15,6 @@ export interface FakeDevice {
 export interface FakeDeviceSettings {
   resolution?: number;
   slowUnits?: Partial<Record<KernelName, (unit: number) => number>>;
+  /** Kernels the device runs; the cold four by default. */
+  names?: readonly KernelName[];
 }

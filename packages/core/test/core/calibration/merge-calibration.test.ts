@@ -19,4 +19,20 @@ describe("mergeCalibration", () => {
     expect(merged.version).toBe(defaultCalibration.version);
     expect(defaultCalibration.reference.alloc).not.toBe(7);
   });
+
+  it("accepts raster rates, raster weights and a cold raster reference of 0", () => {
+    const merged = mergeCalibration(
+      defaultCalibration,
+      { coldReference: { raster: 5 } },
+      {
+        reference: { raster: 40 },
+        coldReference: { raster: 0, path: 2000 },
+        effects: { blur: { weights: { raster: 2, path: 1 } } },
+      },
+    );
+    expect(merged.reference.raster).toBe(40);
+    expect(merged.coldReference.raster).toBe(0);
+    expect(merged.coldReference.path).toBe(2000);
+    expect(merged.effects.blur!.weights).toEqual({ path: 1, raster: 2 });
+  });
 });

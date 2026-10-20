@@ -1,14 +1,20 @@
-import type { GovernorContext, WindowStats } from "./governor.types";
+import type { GovernorContext, RunState, WindowStats } from "./governor.types";
 import { windowFps } from "./judge-window";
 
 /** A step that brings no good window and less than this gain in frame rate did not help. */
 const TRIAL_GAIN = 1.15;
 
-/** Clears every open window and strike: what comes next runs with other effects. */
+/** A run with no frame yet. */
+export function emptyRun(): RunState {
+  return { frames: 0, elapsedMs: 0, lastAt: 0 };
+}
+
+/** Clears every open window, run and strike: what comes next runs with other effects. */
 export function restartWindows(context: GovernorContext): void {
   for (const source of Object.values(context.sources)) {
     source.strikes = 0;
     source.gaps.length = 0;
+    source.run = emptyRun();
   }
 }
 

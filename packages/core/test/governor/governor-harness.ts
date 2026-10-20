@@ -42,6 +42,7 @@ export function harness(
       verdicts.push(isGood);
       return false;
     },
+    isEffect: (source) => source !== "main" && source !== "worker",
   });
   const frames = (count: number, gap: number, source?: string): void => {
     for (let index = 0; index < count; index++) {
