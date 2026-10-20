@@ -1,6 +1,6 @@
 {
   "name": "framebudget",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Decides, per device, which visual effects a site can afford. Keep the effects. Lose the stutter.",
   "license": "MIT",
   "author": "Aly <aly@alysson.dev>",
@@ -51,6 +51,6 @@
     "test": "npm --prefix ../core test"
   },
   "dependencies": {
-    "@framebudget/core": "0.8.1"
+    "@framebudget/core": "0.9.0"
   }
 }
