@@ -22,6 +22,8 @@ export interface BudgetState {
   /** Effects the page used: asked with allows(), reported frames for, or declared with `uses`. */
   readonly used: Set<string>;
   readonly steps: StepState;
+  /** Frames reported before load, handed to the governor when it starts. */
+  readonly pendingFrames: PendingFrame[];
   hasStarted: boolean;
   scope: Scope | undefined;
   context: StartContext | null;
@@ -42,6 +44,8 @@ export interface BudgetState {
   /** A decision for newly used effects is queued (capacity). */
   isCapacityPending: boolean;
   governor: Governor | null;
+  /** Ends effect runs that went silent; null before the governor starts. */
+  runWatch: RunWatch | null;
   isLoaded: boolean;
   isSharingArmed: boolean;
   wasReported: boolean;
@@ -84,6 +88,17 @@ export interface FrameSampler {
   lastFrame: number;
   sampleUntil: number;
   isRunning: boolean;
+}
+
+/** A frame reported before the governor started. */
+export interface PendingFrame {
+  gapMs: number;
+  source: string | undefined;
+}
+
+/** Watches open effect runs; `touch` after a frame makes sure a check is scheduled. */
+export interface RunWatch {
+  touch(): void;
 }
 
 /** Older Safari only has `addListener` on media query lists. */

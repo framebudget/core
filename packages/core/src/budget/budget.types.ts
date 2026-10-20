@@ -86,9 +86,10 @@ export interface Budget {
   off(type: "change", listener: ChangeListener): void;
   /**
    * Reports the time between two frames. `source` is "main" (default),
-   * "worker", or an effect name. Strikes on an effect's own frames step that
-   * effect down; strikes elsewhere step down the likeliest used effect, and the
-   * governor turns it back on when the frames do not recover.
+   * "worker", or an effect name. Frames reported before load wait for the
+   * governor. Strikes on an effect's own frames, or a run of them that ends
+   * under `minFps`, step that effect down; strikes elsewhere step down the
+   * likeliest used effect, and the governor turns it back on when the frames do not recover.
    */
   reportFrame(gapMs: number, source?: string): void;
   configure(options: ConfigureOptions): void;

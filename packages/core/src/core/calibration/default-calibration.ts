@@ -1,11 +1,16 @@
 import type { Calibration } from "./calibration.types";
 
 export const defaultCalibration: Calibration = {
-  version: "provisional-1",
+  version: "provisional-2",
   // Provisional: a desktop Chrome measurement divided by 5, standing in for a
-  // mid-range phone until real devices are calibrated.
-  reference: { float: 10_800, typed: 219_000, alloc: 30_900, path: 4860 },
-  coldReference: { float: 5500, typed: 45_000, alloc: 12_400, path: 1780 },
+  // mid-range phone until real devices are calibrated. raster: the median of
+  // 15 warm runs (24 ms budget) in headless Chrome 154 on a Linux desktop,
+  // 130 strokes/ms, divided by 5. WebGL ran on SwiftShader there (no GPU); a
+  // run with the GPU enabled (RTX 3060 Ti through Vulkan) measured 135.
+  // Whether the 2D canvas itself drew on the GPU was not checked.
+  reference: { float: 10_800, typed: 219_000, alloc: 30_900, path: 4860, raster: 26 },
+  // raster is 0: the cold run never measures it.
+  coldReference: { float: 5500, typed: 45_000, alloc: 12_400, path: 1780, raster: 0 },
   effects: {
     hover: { threshold: 20, cost: 1 },
     canvasLowRes: { threshold: 30, cost: 3, motion: true },

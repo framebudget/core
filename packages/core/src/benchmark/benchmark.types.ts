@@ -16,7 +16,14 @@ export interface Kernel {
 /** The part of the page scope the kernels need. */
 export interface KernelScope {
   OffscreenCanvas?: typeof OffscreenCanvas;
+  /** Makes the raster kernel's canvas without OffscreenCanvas. */
+  document?: Pick<Document, "createElement">;
+  /** Builds the raster kernel's paths. */
+  Path2D?: typeof Path2D;
 }
+
+/** A 2D context the raster kernel draws into. */
+export type RasterContext = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 
 export interface BenchOptions {
   now: () => number;

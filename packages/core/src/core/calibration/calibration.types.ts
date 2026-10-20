@@ -1,6 +1,6 @@
 import type { Tier } from "../tier/tier.enum";
 
-export type KernelName = "float" | "typed" | "alloc" | "path";
+export type KernelName = "float" | "typed" | "alloc" | "path" | "raster";
 
 /** Measured rate over reference rate, per kernel: 1 is the reference device. */
 export type KernelRatios = Partial<Record<KernelName, number>>;
@@ -36,7 +36,8 @@ export interface Calibration {
   /**
    * The same rates measured cold, before the first paint. Cold code runs in
    * the engine's lower tiers, several times slower than warm, so cold scores
-   * need their own reference to land on the same scale.
+   * need their own reference to land on the same scale. A kernel the cold
+   * run never measures (`raster`) has 0 here.
    */
   coldReference: Record<KernelName, number>;
   /** The effect registry. */

@@ -208,7 +208,7 @@ Pass the same definitions to `createBootScript({ calibration: { effects } })` so
 
 **Hysteresis.** Scores wander between page loads, so a device near a threshold could flip an effect on every visit. To prevent this, an effect that was on stays on down to `threshold * (1 - hysteresis)`, and an effect that was off turns on only from `threshold * (1 + hysteresis)`. The default margin is 10%. The previous state is kept across pages.
 
-**Kernel weights.** One score does not fit every effect: a blur leans on the GPU, a canvas on path building, a list animation on allocation. An effect can weigh the four benchmark kernels (`float`, `typed`, `alloc`, `path`): its score is then the weighted geometric mean of the kernel ratios (measured rate over reference rate), times 100, and its threshold applies to that score. Without weights an effect uses the device score. The weights are meant to come from the calibration script, which fits them on real reports:
+**Kernel weights.** One score does not fit every effect: a blur leans on the GPU, a canvas on path building, a list animation on allocation, an SVG of many stroked lines on rasterization. An effect can weigh the five benchmark kernels (`float`, `typed`, `alloc`, `path`, `raster`): its score is then the weighted geometric mean of the kernel ratios (measured rate over reference rate), times 100, and its threshold applies to that score. Only the warm run measures `raster`; until one has (on this page, or cached from an earlier one), the effect is scored on the other kernels. Without weights an effect uses the device score. The weights are meant to come from the calibration script, which fits them on real reports:
 
 ```ts
 configure({ calibration: { effects: { blur: { weights: { path: 0.7, typed: 0.3 } } } } });
@@ -243,22 +243,26 @@ This API is for debugging and demos. Do not use it to make product decisions.
 
 ## The benchmark
 
-The benchmark runs four small kernels: float math, typed array read and write, small object allocation with property access, and canvas path building on an `OffscreenCanvas` when available. Each kernel is measured as work units per millisecond in short, fixed-time slices.
+The benchmark runs five small kernels: float math, typed array read and write, small object allocation with property access, canvas path building on an `OffscreenCanvas` when available, and `raster`, warm run only. Each kernel is measured as work units per millisecond in short, fixed-time slices.
+
+`raster` strokes thin translucent anti-aliased curves into a 64 px 2D canvas (an `OffscreenCanvas`, else a canvas element), like the threads of an SVG ribbon, and reads one pixel back after each batch so the drawing is finished inside the measured slice. Its unit is one stroke. It measures rasterization as the 2D canvas exposes it, on the GPU or the CPU, whichever the browser picked, plus the flush and the readback. It is a proxy for paint cost: it does not measure SVG layout, layer compositing or the browser's own paint scheduling. Without a working canvas it is left out, like `path`.
 
 - The first round is a warm-up. It is discarded, and it sizes the batches so that reading the clock stays cheap on fast devices.
 - Slices are chained on clock ticks, so the coarse `performance.now()` of browsers (100 microseconds in Chrome) still gives accurate rates. A clock too coarse to measure anything falls back to `calibration.fallbackScore`.
 - The score is the median per kernel, then the geometric mean of the ratios against the reference rates, times 100. One kernel that is very fast or very slow cannot dominate the score.
 - Every kernel result feeds a sink that is kept, so no kernel can be eliminated as dead code.
 
-There are two runs. The cold run is in the boot script (1.6 ms of slices). The warm run happens at `load`, with 5 rounds spread over separate tasks so it never becomes a long task. Cold code runs in the engine's lower tiers and is several times slower than warm code, so each run has its own reference rates.
+There are two runs. The cold run is in the boot script (1.6 ms of slices). The warm run happens at `load`, with 5 rounds spread over separate tasks so it never becomes a long task. Cold code runs in the engine's lower tiers and is several times slower than warm code, so each run has its own reference rates. The cold run never measures `raster` (its 0.1 ms slices cannot hold a flush): its reference rate is 0 in `coldReference`, and a kernel with a reference of 0 is left out of the score.
 
 **Hints.** `deviceMemory <= 1` GB or `hardwareConcurrency <= 2` caps the score at 60. Compute Pressure (`PressureObserver`, where available) scales the score by 0.7 when the state is `serious` and by 0.4 when it is `critical`, and the budget changes live. `prefers-reduced-motion`, Save-Data and 2g turn off flagged effects and are watched live.
 
 ## The governor
 
-The governor starts at `load`. Frames are grouped in windows of 30 per source; windows that start in the first 3 s, or in the 2 s cooldown after a change, are not judged.
+The governor starts at `load`. Frames the page reports before that (an entrance animation, a page transition that plays while the page loads) are queued, up to 1000, and handed to it then. Frames are grouped in windows of 30 per source. Windows of `"main"`, `"worker"` and other names that are not effects are not judged in the first 3 s (`warmupMs`), so the page's own loading work is not blamed on an effect; an effect's own frames are judged from the first one, during load included. Nothing is judged in the 2 s cooldown after a change.
 
-**Late frames, not a median.** A frame is late when it takes more than 1.5 frame times. The frame time is the display's own cadence (the fastest steady gaps seen on the page, the warm-up included) but never shorter than `1000 / targetFps` ms, so a 120 Hz screen is held to 60 fps (`targetFps`, default 60). A window is bad when more than 10% of its frames are late (`maxLateFraction`) or it runs under 40 fps (`minFps`), the rate at which every frame would be late on a 60 Hz screen. A median would miss a page that drops every other frame; counting late frames does not. After 3 bad windows in a row from one source, the governor steps one effect down and emits `change`.
+**Late frames, not a median.** A frame is late when it takes more than 1.5 frame times. The frame time is the display's own cadence (the fastest steady gaps seen on the page, the warm-up included) but never shorter than `1000 / targetFps` ms, so a 120 Hz screen is held to 60 fps (`targetFps`, default 60). A window is bad when more than 10% of its frames are late (`maxLateFraction`) or it runs under 30 fps (`minFps`), so a screen capped at 30 Hz to save power is not bad on its own. A median would miss a page that drops every other frame; counting late frames does not. After 3 bad windows in a row from one source, the governor steps one effect down and emits `change`.
+
+**Short effects.** Many effects end before they fill 3 windows: a page transition lasts under a second, a draw-in a few. Consecutive frames reported with an effect's name form a run, which ends when the effect reports nothing for 1 s (`maxGapMs`) or the page is hidden or left. A run that lasted at least 250 ms (`minRunMs`) and averaged under `minFps` steps that effect down for good, like 3 bad windows would, and local learning keeps it off on the next visits. Report each frame of such an effect while it plays, as below.
 
 **What steps down.**
 
@@ -280,7 +284,7 @@ worker.addEventListener("message", (e) => {
 });
 ```
 
-You can tune `targetFps`, `minFps`, `maxLateFraction`, `windowFrames`, `strikes`, `warmupMs`, `cooldownMs`, `cleanWindows` and `maxGapMs` with `configure({ governor })`. `budget.snapshot().fps` and `.late` give the frame rate and the share of late frames per source over its recent windows.
+You can tune `targetFps`, `minFps`, `maxLateFraction`, `windowFrames`, `strikes`, `warmupMs`, `cooldownMs`, `cleanWindows`, `maxGapMs` and `minRunMs` with `configure({ governor })`. `budget.snapshot().fps` and `.late` give the frame rate and the share of late frames per source over its recent windows; a run shorter than a window counts as one.
 
 ## Local learning
 
@@ -331,7 +335,7 @@ configure({
 });
 ```
 
-- **What is sent.** The report (version 2) contains the calibration version, the cold, warm and effective scores, the kernel rates, the clock resolution, hardware hints (cores, memory, pressure), the reduced-motion preference, the tier, the allowed effects, the effects the page used, the effects stepped down for good (a guess still being checked is left out), the explored effect, and the frame rate and share of late frames per reported source. Numbers are rounded.
+- **What is sent.** The report (version 2) contains the calibration version, the cold, warm and effective scores, the kernel rates (`raster` only when the warm run measured it), the clock resolution, hardware hints (cores, memory, pressure), the reduced-motion preference, the tier, the allowed effects, the effects the page used, the effects stepped down for good (a guess still being checked is left out), the explored effect, and the frame rate and share of late frames per reported source. Numbers are rounded.
 - **Exploring below thresholds.** An effect never runs below its threshold, so reports alone cannot tell whether a threshold is too strict. With `explore`, that share of the reporting page views turns on one used effect whose score is within 25% under its threshold, picked at random, and names it in the report. The governor still steps it down if it stutters (it is the first suspect), and nothing is learned from it. Off by default.
 - **What is not sent.** No identifiers, cookies, URL, user agent or timestamps. Only sampled page views report.
 - **When.** One `navigator.sendBeacon` call to framebudget.dev when the page is hidden, after load, and a second one to `alsoSendTo` when you set it.

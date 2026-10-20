@@ -4,6 +4,7 @@ import { buildSnapshot } from "./decision/build-snapshot";
 import { configureBudget, registerEffect } from "./commands/configure-budget";
 import { isEffect, markUsed } from "./commands/mark-used";
 import { createBudgetState } from "./create-budget-state";
+import { takeFrame } from "./governor/frames/frame-intake";
 import { assertSimulatedScore, forceTier, simulateScore } from "./commands/session-overrides";
 import { startBudget } from "./lifecycle/start-budget";
 
@@ -47,7 +48,7 @@ export function createBudget(init: CreateBudgetOptions = {}): Budget {
       if (frameSource !== undefined && !state.used.has(frameSource) && isEffect(state, frameSource)) {
         markUsed(state, frameSource);
       }
-      state.governor?.report(gapMs, frameSource);
+      takeFrame(state, gapMs, frameSource);
     },
     configure(options) {
       configureBudget(state, options, start);
