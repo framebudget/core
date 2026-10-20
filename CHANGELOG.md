@@ -2,6 +2,24 @@
 
 Every release of the framebudget library, newest first, split by package: `@framebudget/core`, `@framebudget/react` and `framebudget`. Releases up to 0.2.1 are split into the library and the website (framebudget.dev), which now has its own changelog in [framebudget/website](https://github.com/framebudget/website).
 
+## [0.9.0] - 2026-10-20
+
+### @framebudget/core
+
+#### Features
+
+- **core:** judge short effects and raster cost (#29) ([69bb9b5](https://github.com/framebudget/core/commit/69bb9b56496949a1349002a93d493884cda62644)) ([#29](https://github.com/framebudget/core/pull/29))
+
+### Framework bindings
+
+No changes.
+
+### framebudget
+
+#### Features
+
+- **core:** judge short effects and raster cost (#29) ([69bb9b5](https://github.com/framebudget/core/commit/69bb9b56496949a1349002a93d493884cda62644)) ([#29](https://github.com/framebudget/core/pull/29))
+
 ## [0.8.1] - 2026-10-19
 
 ### @framebudget/core
