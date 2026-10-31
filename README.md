@@ -1,5 +1,8 @@
 # framebudget
 
+[![npm version](https://img.shields.io/npm/v/framebudget)](https://www.npmjs.com/package/framebudget)
+[![npm downloads](https://img.shields.io/npm/d18m/framebudget)](https://www.npmjs.com/package/framebudget)
+
 ![framebudget](https://raw.githubusercontent.com/framebudget/assets/main/brand/og.png)
 
 Keep the effects. Lose the stutter.
@@ -31,13 +34,13 @@ npm install @framebudget/vue       # Vue 3.3 or later: useBudget, useTier, provi
 npm install @framebudget/angular   # Angular 18 or later: injectBudget, injectTier, provideBudget
 ```
 
-| Package | Contains | Entries |
-| --- | --- | --- |
-| `framebudget` | the core under its short name: re-exports `@framebudget/core` | `framebudget`, `framebudget/boot`, `framebudget/panel` |
-| `@framebudget/core` | the core, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
-| `@framebudget/react` | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` |
-| `@framebudget/vue` | the Vue composables; brings `@framebudget/core` with it | `@framebudget/vue` |
-| `@framebudget/angular` | the Angular signals; brings `@framebudget/core` with it | `@framebudget/angular` |
+| Package | Contains | Entries | Downloads |
+| --- | --- | --- | --- |
+| [`framebudget`](https://www.npmjs.com/package/framebudget) | the core under its short name: re-exports `@framebudget/core` | `framebudget`, `framebudget/boot`, `framebudget/panel` | ![downloads](https://img.shields.io/npm/d18m/framebudget) |
+| [`@framebudget/core`](https://www.npmjs.com/package/@framebudget/core) | the core, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/core) |
+| [`@framebudget/react`](https://www.npmjs.com/package/@framebudget/react) | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/react) |
+| [`@framebudget/vue`](https://www.npmjs.com/package/@framebudget/vue) | the Vue composables; brings `@framebudget/core` with it | `@framebudget/vue` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/vue) |
+| [`@framebudget/angular`](https://www.npmjs.com/package/@framebudget/angular) | the Angular signals; brings `@framebudget/core` with it | `@framebudget/angular` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/angular) |
 
 The code exists once: `framebudget` only re-exports `@framebudget/core`, and every framework package depends on `@framebudget/core`, so a page has a single `budget` whichever of them it imports. The examples below import the core from `framebudget`; `@framebudget/core` exports the same names.
 
@@ -349,6 +352,23 @@ While sharing, framebudget fetches a calibration patch (JSON in the `calibration
 
 `share` changed in 0.5.0: `endpoint` is gone. Reports always go to framebudget.dev, and `alsoSendTo` adds your own endpoint. To keep sending to your server, rename `endpoint` to `alsoSendTo`.
 
+## Privacy policy
+
+- **The library.** framebudget keeps its state (local learning and the date of the last report) in one `localStorage` entry on the device. Nothing leaves the device unless the site developer turns sharing on (see [Telemetry and privacy](#telemetry-and-privacy)), and never under Global Privacy Control or Save-Data.
+- **framebudget.dev.** Shared reports and opt-in [lab](https://framebudget.dev/lab) runs are stored without the IP address, the user agent string, cookies, identifiers, the page URL or the time of day; only coarse facts derived from the request are kept (browser engine and major version, operating system family, mobile or not, country code). They are deleted after 400 days and are used only to calibrate framebudget.
+- **Your site.** When you turn sharing on, say in your own privacy policy that an anonymous report goes to framebudget.dev, and let visitors say no with `configure({ share: null })`.
+
+The full policy, with how to opt out, is at [framebudget.dev/privacy](https://framebudget.dev/privacy).
+
+## Contributing
+
+Anyone is welcome to contribute. Open an [issue](https://github.com/framebudget/core/issues) for a bug or an idea, or fork the repository and open a pull request against `main`; no prior permission is needed.
+
+- **Review.** Every pull request needs the approval of a framebudget code owner ([`.github/CODEOWNERS`](https://github.com/framebudget/core/blob/main/.github/CODEOWNERS)) before it can be merged. A new push dismisses earlier approvals, and the last push must be approved by someone other than its author.
+- **Checks.** Open the pull request as a draft while you work; marking it ready for review runs the [pull request checks](#pull-request-checks). Run `npm test`, `npm run lint` and `npm run typecheck` locally first (the pre-commit hook does it for you).
+- **Title.** Pull requests are squash merged, so the title becomes the commit on `main` and feeds the release notes. Write it as a [conventional commit](https://www.conventionalcommits.org/): `type(scope): description`, for example `fix(governor): ignore hidden tabs`.
+- **License.** By contributing, you agree that your contribution is licensed under the MIT license of this repository.
+
 ## Development
 
 The repository ([github.com/framebudget/core](https://github.com/framebudget/core)) is an npm workspaces monorepo. Its five packages are released together, always at the same version:
@@ -437,3 +457,7 @@ A package can only trust a workflow once it exists on npmjs. Before the first re
 Check a release yourself with `gh release verify vX.Y.Z` and `gh release verify-asset vX.Y.Z <file>`, and where a file was built with `gh attestation verify <file> --repo framebudget/core` (build provenance: the workflow run and the commit that produced it).
 
 Preview the notes with `npm run release:notes -- --tag v0.2.0 --dry-run` (HEAD stands in for a tag that does not exist yet), and the art with `npm run release:art -- --template ../assets/brand/build/release.html --version 0.2.0 --date 2026-10-03 --notes notes.json --out art.png` (with [framebudget/assets](https://github.com/framebudget/assets) checked out next to this repository; headless Chrome, `CHROME_PATH` to override).
+
+## License
+
+[MIT](https://github.com/framebudget/core/blob/main/LICENSE). You may use, copy, modify, merge, publish, distribute, sublicense and sell framebudget, in open source and commercial projects, as long as the copyright notice and the license text are kept in copies of it. It comes without warranty of any kind.
