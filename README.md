@@ -1,5 +1,8 @@
 # framebudget
 
+[![npm version](https://img.shields.io/npm/v/framebudget)](https://www.npmjs.com/package/framebudget)
+[![npm downloads](https://img.shields.io/npm/d18m/framebudget)](https://www.npmjs.com/package/framebudget)
+
 ![framebudget](https://raw.githubusercontent.com/framebudget/assets/main/brand/og.png)
 
 Keep the effects. Lose the stutter.
@@ -31,13 +34,13 @@ npm install @framebudget/vue       # Vue 3.3 or later: useBudget, useTier, provi
 npm install @framebudget/angular   # Angular 18 or later: injectBudget, injectTier, provideBudget
 ```
 
-| Package | Contains | Entries |
-| --- | --- | --- |
-| `framebudget` | the core under its short name: re-exports `@framebudget/core` | `framebudget`, `framebudget/boot`, `framebudget/panel` |
-| `@framebudget/core` | the core, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` |
-| `@framebudget/react` | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` |
-| `@framebudget/vue` | the Vue composables; brings `@framebudget/core` with it | `@framebudget/vue` |
-| `@framebudget/angular` | the Angular signals; brings `@framebudget/core` with it | `@framebudget/angular` |
+| Package | Contains | Entries | Downloads |
+| --- | --- | --- | --- |
+| [`framebudget`](https://www.npmjs.com/package/framebudget) | the core under its short name: re-exports `@framebudget/core` | `framebudget`, `framebudget/boot`, `framebudget/panel` | ![downloads](https://img.shields.io/npm/d18m/framebudget) |
+| [`@framebudget/core`](https://www.npmjs.com/package/@framebudget/core) | the core, without any framework | `@framebudget/core`, `@framebudget/core/boot`, `@framebudget/core/panel` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/core) |
+| [`@framebudget/react`](https://www.npmjs.com/package/@framebudget/react) | the React hooks; brings `@framebudget/core` with it | `@framebudget/react` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/react) |
+| [`@framebudget/vue`](https://www.npmjs.com/package/@framebudget/vue) | the Vue composables; brings `@framebudget/core` with it | `@framebudget/vue` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/vue) |
+| [`@framebudget/angular`](https://www.npmjs.com/package/@framebudget/angular) | the Angular signals; brings `@framebudget/core` with it | `@framebudget/angular` | ![downloads](https://img.shields.io/npm/d18m/@framebudget/angular) |
 
 The code exists once: `framebudget` only re-exports `@framebudget/core`, and every framework package depends on `@framebudget/core`, so a page has a single `budget` whichever of them it imports. The examples below import the core from `framebudget`; `@framebudget/core` exports the same names.
 
